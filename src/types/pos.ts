@@ -1,0 +1,32 @@
+export interface MenuItem {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  image?: string;
+}
+
+export interface OrderItem {
+  menuItem: MenuItem;
+  quantity: number;
+  notes?: string;
+}
+
+export interface Order {
+  id: string;
+  tableId: number;
+  items: OrderItem[];
+  status: 'active' | 'completed' | 'cancelled';
+  createdAt: Date;
+  total: number;
+}
+
+export interface Table {
+  id: number;
+  name: string;
+  status: 'available' | 'occupied' | 'reserved';
+  currentOrder?: Order;
+}
+
+export type MenuCategory = 'drinks' | 'sides' | 'pizza' | 'pasta' | 'desserts';
