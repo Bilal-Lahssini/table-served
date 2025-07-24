@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function POS() {
   const [selectedCategory, setSelectedCategory] = useState<MenuCategory>('drinks');
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
   
   const {
     tables,
@@ -24,7 +25,24 @@ export default function POS() {
     cancelOrder
   } = usePOSStore();
 
-  const filteredMenuItems = menuItems.filter(item => item.category === selectedCategory);
+  const subcategories = {
+    drinks: ['water', 'softdrinks', 'hot drinks', 'wine', 'beers', 'aperitive & spirits'],
+    pizza: ['small', 'medium', 'large'],
+    sides: [],
+    pasta: [],
+    desserts: []
+  };
+
+  const handleCategoryChange = (category: MenuCategory) => {
+    setSelectedCategory(category);
+    setSelectedSubcategory(null);
+  };
+
+  const filteredMenuItems = menuItems.filter(item => {
+    if (item.category !== selectedCategory) return false;
+    if (selectedSubcategory && item.subcategory !== selectedSubcategory) return false;
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -71,7 +89,7 @@ export default function POS() {
                       <Button
                         key={category.id}
                         variant={selectedCategory === category.id ? "default" : "outline"}
-                        onClick={() => setSelectedCategory(category.id)}
+                        onClick={() => handleCategoryChange(category.id)}
                         className="flex items-center gap-2"
                       >
                         <span>{category.icon}</span>
@@ -79,6 +97,30 @@ export default function POS() {
                       </Button>
                     ))}
                   </div>
+                  
+                  {/* Subcategories */}
+                  {subcategories[selectedCategory].length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t">
+                      <Button
+                        variant={selectedSubcategory === null ? "default" : "outline"}
+                        onClick={() => setSelectedSubcategory(null)}
+                        size="sm"
+                      >
+                        All {selectedCategory}
+                      </Button>
+                      {subcategories[selectedCategory].map((subcategory) => (
+                        <Button
+                          key={subcategory}
+                          variant={selectedSubcategory === subcategory ? "default" : "outline"}
+                          onClick={() => setSelectedSubcategory(subcategory)}
+                          size="sm"
+                          className="capitalize"
+                        >
+                          {subcategory}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
