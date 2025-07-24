@@ -35,11 +35,9 @@ export function OrderSummary({
     );
   }
 
-  const subtotal = order.items.reduce((sum, item) => 
+  const total = order.items.reduce((sum, item) => 
     sum + (item.menuItem.price * item.quantity), 0
   );
-  const tax = subtotal * 0.08; // 8% tax
-  const total = subtotal + tax;
 
   return (
     <Card className="h-full flex flex-col">
@@ -59,7 +57,7 @@ export function OrderSummary({
               <div className="flex-1">
                 <h4 className="font-medium">{orderItem.menuItem.name}</h4>
                 <p className="text-sm text-muted-foreground">
-                  ${orderItem.menuItem.price.toFixed(2)} each
+                  €{orderItem.menuItem.price.toFixed(2)} each
                 </p>
               </div>
               
@@ -98,18 +96,9 @@ export function OrderSummary({
 
         <div className="space-y-2">
           <Separator />
-          <div className="flex justify-between">
-            <span>Subtotal:</span>
-            <span>${subtotal.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between text-sm text-muted-foreground">
-            <span>Tax (8%):</span>
-            <span>${tax.toFixed(2)}</span>
-          </div>
-          <Separator />
           <div className="flex justify-between font-bold text-lg">
             <span>Total:</span>
-            <span>${total.toFixed(2)}</span>
+            <span>€{total.toFixed(2)}</span>
           </div>
         </div>
 

@@ -19,7 +19,7 @@ export function MenuItemCard({ item, onAddToOrder }: MenuItemCardProps) {
               {item.description}
             </p>
             <div className="text-lg font-bold text-primary">
-              ${item.price.toFixed(2)}
+              €{item.price.toFixed(2)}
             </div>
           </div>
         </div>

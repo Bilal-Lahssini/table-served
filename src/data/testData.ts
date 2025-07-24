@@ -1,34 +1,112 @@
 import { MenuItem, Table, MenuCategory } from '@/types/pos';
 
 export const menuItems: MenuItem[] = [
-  // Drinks
+  // Drinks - Water
   {
     id: 'drink-1',
-    name: 'Coca Cola',
-    description: 'Classic soft drink',
+    name: 'Sparkling Water',
+    description: 'San Pellegrino sparkling water',
     price: 2.50,
-    category: 'drinks'
+    category: 'drinks',
+    subcategory: 'water'
   },
   {
     id: 'drink-2',
-    name: 'Italian Wine',
-    description: 'House red wine',
-    price: 8.00,
-    category: 'drinks'
+    name: 'Still Water',
+    description: 'Natural mineral water',
+    price: 2.00,
+    category: 'drinks',
+    subcategory: 'water'
   },
+
+  // Drinks - Soft Drinks
   {
     id: 'drink-3',
-    name: 'Fresh Orange Juice',
-    description: 'Freshly squeezed orange juice',
-    price: 4.50,
-    category: 'drinks'
+    name: 'Coca Cola',
+    description: 'Classic soft drink',
+    price: 2.80,
+    category: 'drinks',
+    subcategory: 'softdrinks'
   },
   {
     id: 'drink-4',
+    name: 'Fresh Orange Juice',
+    description: 'Freshly squeezed orange juice',
+    price: 4.50,
+    category: 'drinks',
+    subcategory: 'softdrinks'
+  },
+
+  // Drinks - Hot Drinks
+  {
+    id: 'drink-5',
     name: 'Espresso',
     description: 'Traditional Italian coffee',
-    price: 2.00,
-    category: 'drinks'
+    price: 2.20,
+    category: 'drinks',
+    subcategory: 'hot drinks'
+  },
+  {
+    id: 'drink-6',
+    name: 'Cappuccino',
+    description: 'Espresso with steamed milk foam',
+    price: 3.00,
+    category: 'drinks',
+    subcategory: 'hot drinks'
+  },
+
+  // Drinks - Wine
+  {
+    id: 'drink-7',
+    name: 'Italian Red Wine',
+    description: 'House red wine from Tuscany',
+    price: 8.00,
+    category: 'drinks',
+    subcategory: 'wine'
+  },
+  {
+    id: 'drink-8',
+    name: 'Prosecco',
+    description: 'Italian sparkling wine',
+    price: 9.50,
+    category: 'drinks',
+    subcategory: 'wine'
+  },
+
+  // Drinks - Beer
+  {
+    id: 'drink-9',
+    name: 'Peroni',
+    description: 'Italian lager beer',
+    price: 4.00,
+    category: 'drinks',
+    subcategory: 'beers'
+  },
+  {
+    id: 'drink-10',
+    name: 'Corona',
+    description: 'Mexican beer with lime',
+    price: 4.50,
+    category: 'drinks',
+    subcategory: 'beers'
+  },
+
+  // Drinks - Aperitive & Spirits
+  {
+    id: 'drink-11',
+    name: 'Aperol Spritz',
+    description: 'Italian aperitif with Prosecco',
+    price: 7.50,
+    category: 'drinks',
+    subcategory: 'aperitive & spirits'
+  },
+  {
+    id: 'drink-12',
+    name: 'Limoncello',
+    description: 'Traditional Italian lemon liqueur',
+    price: 5.00,
+    category: 'drinks',
+    subcategory: 'aperitive & spirits'
   },
 
   // Sides
@@ -61,34 +139,82 @@ export const menuItems: MenuItem[] = [
     category: 'sides'
   },
 
-  // Pizza
+  // Pizza - Small
   {
-    id: 'pizza-1',
+    id: 'pizza-1-small',
+    name: 'Margherita',
+    description: 'Classic tomato, mozzarella, and basil',
+    price: 9.50,
+    category: 'pizza',
+    subcategory: 'small'
+  },
+  {
+    id: 'pizza-2-small',
+    name: 'Pepperoni',
+    description: 'Tomato sauce, mozzarella, and pepperoni',
+    price: 11.50,
+    category: 'pizza',
+    subcategory: 'small'
+  },
+
+  // Pizza - Medium
+  {
+    id: 'pizza-1-medium',
     name: 'Margherita',
     description: 'Classic tomato, mozzarella, and basil',
     price: 14.50,
-    category: 'pizza'
+    category: 'pizza',
+    subcategory: 'medium'
   },
   {
-    id: 'pizza-2',
+    id: 'pizza-2-medium',
     name: 'Pepperoni',
     description: 'Tomato sauce, mozzarella, and pepperoni',
     price: 16.50,
-    category: 'pizza'
+    category: 'pizza',
+    subcategory: 'medium'
   },
   {
-    id: 'pizza-3',
+    id: 'pizza-3-medium',
     name: 'Quattro Stagioni',
     description: 'Four seasons with mushrooms, artichokes, ham, and olives',
     price: 18.50,
-    category: 'pizza'
+    category: 'pizza',
+    subcategory: 'medium'
+  },
+
+  // Pizza - Large
+  {
+    id: 'pizza-1-large',
+    name: 'Margherita',
+    description: 'Classic tomato, mozzarella, and basil',
+    price: 18.50,
+    category: 'pizza',
+    subcategory: 'large'
   },
   {
-    id: 'pizza-4',
+    id: 'pizza-2-large',
+    name: 'Pepperoni',
+    description: 'Tomato sauce, mozzarella, and pepperoni',
+    price: 21.50,
+    category: 'pizza',
+    subcategory: 'large'
+  },
+  {
+    id: 'pizza-3-large',
+    name: 'Quattro Stagioni',
+    description: 'Four seasons with mushrooms, artichokes, ham, and olives',
+    price: 24.50,
+    category: 'pizza',
+    subcategory: 'large'
+  },
+  {
+    id: 'pizza-4-large',
     name: 'Hawaiian',
     description: 'Ham and pineapple with mozzarella',
-    price: 17.00,
-    category: 'pizza'
+    price: 22.00,
+    category: 'pizza',
+    subcategory: 'large'
   },
 
   // Pasta
