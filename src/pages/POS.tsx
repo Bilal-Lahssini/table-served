@@ -26,8 +26,8 @@ export default function POS() {
   } = usePOSStore();
 
   const subcategories = {
-    drinks: ['water', 'softdrinks', 'hot drinks', 'wine', 'beers', 'aperitive & spirits'],
-    pizza: ['small', 'medium', 'large'],
+    drinks: ['water', 'frisdranken', 'warme dranken', 'wijn', 'bier', 'aperitief & sterke drank'],
+    pizza: ['klein', 'middel', 'groot'],
     sides: [],
     pasta: [],
     desserts: []
@@ -49,8 +49,8 @@ export default function POS() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Restaurant POS System</h1>
-          <p className="text-muted-foreground">Manage tables, orders, and menu items</p>
+          <h1 className="text-3xl font-bold mb-2">Restaurant Kassasysteem</h1>
+          <p className="text-muted-foreground">Beheer tafels, bestellingen en menu items</p>
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -60,9 +60,9 @@ export default function POS() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  Restaurant Tables
+                  Restaurant Tafels
                   <Badge variant="secondary">
-                    {tables.filter(t => t.status === 'occupied').length}/{tables.length} Occupied
+                    {tables.filter(t => t.status === 'occupied').length}/{tables.length} Bezet
                   </Badge>
                 </CardTitle>
               </CardHeader>
@@ -83,7 +83,7 @@ export default function POS() {
             {selectedTable && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Menu - Table {selectedTable.id}</CardTitle>
+                  <CardTitle>Menu - Tafel {selectedTable.id}</CardTitle>
                   <div className="flex flex-wrap gap-2">
                     {menuCategories.map((category) => (
                       <Button
@@ -106,7 +106,7 @@ export default function POS() {
                         onClick={() => setSelectedSubcategory(null)}
                         size="sm"
                       >
-                        All {selectedCategory}
+                        Alle {selectedCategory}
                       </Button>
                       {subcategories[selectedCategory].map((subcategory) => (
                         <Button

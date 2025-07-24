@@ -24,11 +24,11 @@ export function OrderSummary({
     return (
       <Card className="h-full">
         <CardHeader>
-          <CardTitle>Order Summary</CardTitle>
+          <CardTitle>Bestelling Overzicht</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground text-center py-8">
-            Select a table to start an order
+            Selecteer een tafel om een bestelling te starten
           </p>
         </CardContent>
       </Card>
@@ -43,9 +43,9 @@ export function OrderSummary({
     <Card className="h-full flex flex-col">
       <CardHeader>
         <div className="flex justify-between items-center">
-          <CardTitle>Table {order.tableId} Order</CardTitle>
+          <CardTitle>Tafel {order.tableId} Bestelling</CardTitle>
           <Badge variant="secondary">
-            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+            {order.status === 'active' ? 'Actief' : order.status === 'completed' ? 'Voltooid' : 'Geannuleerd'}
           </Badge>
         </div>
       </CardHeader>
@@ -57,7 +57,7 @@ export function OrderSummary({
               <div className="flex-1">
                 <h4 className="font-medium">{orderItem.menuItem.name}</h4>
                 <p className="text-sm text-muted-foreground">
-                  €{orderItem.menuItem.price.toFixed(2)} each
+                  €{orderItem.menuItem.price.toFixed(2)} per stuk
                 </p>
               </div>
               
@@ -97,7 +97,7 @@ export function OrderSummary({
         <div className="space-y-2">
           <Separator />
           <div className="flex justify-between font-bold text-lg">
-            <span>Total:</span>
+            <span>Totaal:</span>
             <span>€{total.toFixed(2)}</span>
           </div>
         </div>
@@ -108,14 +108,14 @@ export function OrderSummary({
             onClick={onCancelOrder}
             className="flex-1"
           >
-            Cancel Order
+            Annuleer Bestelling
           </Button>
           <Button 
             onClick={onCompleteOrder}
             className="flex-1"
             disabled={order.items.length === 0}
           >
-            Complete Order
+            Voltooi Bestelling
           </Button>
         </div>
       </CardContent>

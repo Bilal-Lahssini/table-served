@@ -29,7 +29,7 @@ export function MenuItemCard({ item, onAddToOrder }: MenuItemCardProps) {
           size="sm"
         >
           <Plus className="h-4 w-4 mr-1" />
-          Add to Order
+          Toevoegen aan Bestelling
         </Button>
       </CardContent>
     </Card>

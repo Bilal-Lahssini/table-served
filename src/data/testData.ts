@@ -272,16 +272,16 @@ export const menuItems: MenuItem[] = [
 ];
 
 export const initialTables: Table[] = [
-  { id: 1, name: 'Table 1', status: 'available' },
-  { id: 2, name: 'Table 2', status: 'available' },
-  { id: 3, name: 'Table 3', status: 'available' },
-  { id: 4, name: 'Table 4', status: 'available' },
-  { id: 5, name: 'Table 5', status: 'available' }
+  { id: 1, name: 'Tafel 1', status: 'available' },
+  { id: 2, name: 'Tafel 2', status: 'available' },
+  { id: 3, name: 'Tafel 3', status: 'available' },
+  { id: 4, name: 'Tafel 4', status: 'available' },
+  { id: 5, name: 'Tafel 5', status: 'available' }
 ];
 
 export const menuCategories: { id: MenuCategory; name: string; icon: string }[] = [
-  { id: 'drinks', name: 'Drinks', icon: '🥤' },
-  { id: 'sides', name: 'Sides', icon: '🥗' },
+  { id: 'drinks', name: 'Dranken', icon: '🥤' },
+  { id: 'sides', name: 'Bijgerechten', icon: '🥗' },
   { id: 'pizza', name: 'Pizza', icon: '🍕' },
   { id: 'pasta', name: 'Pasta', icon: '🍝' },
   { id: 'desserts', name: 'Desserts', icon: '🍰' }

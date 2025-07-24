@@ -49,12 +49,13 @@ export function TableCard({ table, onClick }: TableCardProps) {
         <h3 className="font-semibold text-lg mb-2">{table.name}</h3>
         <Badge className={getStatusColor(table.status)}>
           <span className="mr-1">{getStatusIcon(table.status)}</span>
-          {table.status.charAt(0).toUpperCase() + table.status.slice(1)}
+          {table.status === 'available' ? 'Beschikbaar' : 
+           table.status === 'occupied' ? 'Bezet' : 'Gereserveerd'}
         </Badge>
         {table.currentOrder && (
           <div className="mt-3 text-sm text-muted-foreground">
             <div>{table.currentOrder.items.length} items</div>
-            <div className="font-medium">${table.currentOrder.total.toFixed(2)}</div>
+            <div className="font-medium">€{table.currentOrder.total.toFixed(2)}</div>
           </div>
         )}
       </CardContent>
