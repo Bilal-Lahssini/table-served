@@ -27,7 +27,7 @@ export default function POS() {
 
   const subcategories = {
     drinks: ['water', 'frisdranken', 'warme dranken', 'wijn', 'bier', 'aperitief & sterke drank'],
-    pizza: ['klein', 'middel', 'groot'],
+    pizza: ['Small', 'Medium', 'Large'],
     sides: [],
     pasta: [],
     desserts: []
@@ -49,8 +49,8 @@ export default function POS() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Restaurant Kassasysteem</h1>
-          <p className="text-muted-foreground">Beheer tafels, bestellingen en menu items</p>
+          <h1 className="text-3xl font-bold mb-2">Pepe's KassaSysteem</h1>
+          <p className="text-muted-foreground">Gemaakt door Bilal </p>
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -60,7 +60,7 @@ export default function POS() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  Restaurant Tafels
+                  Tafels
                   <Badge variant="secondary">
                     {tables.filter(t => t.status === 'occupied').length}/{tables.length} Bezet
                   </Badge>
