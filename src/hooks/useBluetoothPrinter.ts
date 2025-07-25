@@ -43,22 +43,44 @@ interface BluetoothPrinter {
 export function useBluetoothPrinter() {
   const [printer, setPrinter] = useState<BluetoothPrinter | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [availableDevices, setAvailableDevices] = useState<BluetoothDevice[]>([]);
+  const [isScanning, setIsScanning] = useState(false);
 
-  const connectPrinter = useCallback(async () => {
+  const scanForPrinters = useCallback(async () => {
     if (!navigator.bluetooth) {
       toast.error('Bluetooth niet ondersteund in deze browser');
       return;
     }
 
-    setIsConnecting(true);
+    setIsScanning(true);
     try {
       const device = await navigator.bluetooth.requestDevice({
         filters: [
           { services: ['000018f0-0000-1000-8000-00805f9b34fb'] }, // Thermal printer service
+          { namePrefix: 'Printer' },
+          { namePrefix: 'Receipt' },
+          { namePrefix: 'Thermal' },
+          { namePrefix: 'POS' }
         ],
         optionalServices: ['battery_service']
       });
 
+      // Since Web Bluetooth API only allows connecting to one device at a time,
+      // we'll directly connect to the selected device
+      await connectToDevice(device);
+    } catch (error) {
+      console.error('Bluetooth scan failed:', error);
+      if (error instanceof Error && error.name !== 'NotFoundError') {
+        toast.error('Kon niet scannen naar printers');
+      }
+    } finally {
+      setIsScanning(false);
+    }
+  }, []);
+
+  const connectToDevice = useCallback(async (device: BluetoothDevice) => {
+    setIsConnecting(true);
+    try {
       await device.gatt?.connect();
       
       setPrinter({
@@ -66,7 +88,7 @@ export function useBluetoothPrinter() {
         isConnected: true
       });
 
-      toast.success(`Printer "${device.name}" verbonden`);
+      toast.success(`Printer "${device.name || 'Onbekend'}" verbonden`);
     } catch (error) {
       console.error('Bluetooth connection failed:', error);
       toast.error('Kon niet verbinden met printer');
@@ -92,6 +114,7 @@ export function useBluetoothPrinter() {
     try {
       // Basic receipt printing logic would go here
       // This is a simplified implementation
+      console.log('Printing receipt:', orderData);
       toast.success('Bon wordt afgedrukt...');
     } catch (error) {
       console.error('Print failed:', error);
@@ -99,12 +122,32 @@ export function useBluetoothPrinter() {
     }
   }, [printer]);
 
+  const sendTestPrint = useCallback(async () => {
+    if (!printer?.isConnected) {
+      toast.error('Geen printer verbonden');
+      return;
+    }
+
+    try {
+      // Test print functionality
+      console.log('Sending test print...');
+      toast.success('Test bon wordt afgedrukt...');
+    } catch (error) {
+      console.error('Test print failed:', error);
+      toast.error('Test afdrukken mislukt');
+    }
+  }, [printer]);
+
   return {
     printer,
     isConnecting,
-    connectPrinter,
+    isScanning,
+    availableDevices,
+    scanForPrinters,
+    connectToDevice,
     disconnectPrinter,
     printReceipt,
+    sendTestPrint,
     isConnected: printer?.isConnected || false
   };
 }
