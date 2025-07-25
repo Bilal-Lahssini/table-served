@@ -8,6 +8,7 @@ import { OrderSummary } from '@/components/pos/OrderSummary';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowLeft } from 'lucide-react';
 
 export default function POS() {
   const [selectedCategory, setSelectedCategory] = useState<MenuCategory>('drinks');
@@ -24,6 +25,12 @@ export default function POS() {
     completeOrder,
     cancelOrder
   } = usePOSStore();
+
+  const handleBackToTables = () => {
+    selectTable(null);
+    setSelectedCategory('drinks');
+    setSelectedSubcategory(null);
+  };
 
   const subcategories = {
     drinks: ['water', 'frisdranken', 'warme dranken', 'wijn', 'bier', 'aperitief & sterke drank'],
@@ -53,10 +60,9 @@ export default function POS() {
           <p className="text-muted-foreground">Gemaakt door Bilal </p>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          {/* Tables Section */}
-          <div className="xl:col-span-2 space-y-6">
-            {/* Tables Grid */}
+        {!selectedTable ? (
+          /* Table Overview */
+          <div className="max-w-4xl mx-auto">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
@@ -67,7 +73,7 @@ export default function POS() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {tables.map((table) => (
                     <TableCard
                       key={table.id}
@@ -78,12 +84,32 @@ export default function POS() {
                 </div>
               </CardContent>
             </Card>
-
+          </div>
+        ) : (
+          /* Table Detail View */
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
             {/* Menu Section */}
-            {selectedTable && (
+            <div className="xl:col-span-2 space-y-6">
+              {/* Back Button and Table Header */}
+              <div className="flex items-center gap-4 mb-6">
+                <Button
+                  onClick={handleBackToTables}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Terug naar Tafels
+                </Button>
+                <div>
+                  <h2 className="text-2xl font-bold">Tafel {selectedTable.id}</h2>
+                  <p className="text-muted-foreground">{selectedTable.name}</p>
+                </div>
+              </div>
+
               <Card>
                 <CardHeader>
-                  <CardTitle>Menu - Tafel {selectedTable.id}</CardTitle>
+                  <CardTitle>Menu</CardTitle>
                   <div className="flex flex-wrap gap-2">
                     {menuCategories.map((category) => (
                       <Button
@@ -134,22 +160,22 @@ export default function POS() {
                   </div>
                 </CardContent>
               </Card>
-            )}
-          </div>
+            </div>
 
-          {/* Order Summary */}
-          <div className="xl:col-span-1">
-            <div className="sticky top-6">
-              <OrderSummary
-                order={currentOrder}
-                onUpdateQuantity={updateItemQuantity}
-                onRemoveItem={removeItemFromOrder}
-                onCompleteOrder={completeOrder}
-                onCancelOrder={cancelOrder}
-              />
+            {/* Order Summary */}
+            <div className="xl:col-span-1">
+              <div className="sticky top-6">
+                <OrderSummary
+                  order={currentOrder}
+                  onUpdateQuantity={updateItemQuantity}
+                  onRemoveItem={removeItemFromOrder}
+                  onCompleteOrder={completeOrder}
+                  onCancelOrder={cancelOrder}
+                />
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
