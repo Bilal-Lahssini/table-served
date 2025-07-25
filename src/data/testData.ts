@@ -1342,6 +1342,42 @@ export const menuItems: MenuItem[] = [
   category: 'drinks',
   subcategory: 'water'
 },
+
+{
+  id: 'drinks-52',
+  name: 'Bianco Glas (Witte Wijn)',
+  description: '',
+  price: 5.5,
+  category: 'drinks',
+  subcategory: 'wijn'
+},
+
+{
+  id: 'drinks-53',
+  name: 'Rosato Glas (Rose wijn)',
+  description: '',
+  price: 5.5,
+  category: 'drinks',
+  subcategory: 'wijn'
+},
+
+{
+  id: 'drinks-54',
+  name: 'Rosso Glas (Rode wijn)',
+  description: '',
+  price: 5.5,
+  category: 'drinks',
+  subcategory: 'wijn'
+},
+
+{
+  id: 'drinks-55',
+  name: 'Prosecco Glas',
+  description: '',
+  price: 5.5,
+  category: 'drinks',
+  subcategory: 'wijn'
+},
 ];
 
 export const initialTables: Table[] = [
