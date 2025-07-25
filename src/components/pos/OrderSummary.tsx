@@ -2,9 +2,8 @@ import { Order, OrderItem } from '@/types/pos';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Minus, Plus, Trash2, Bluetooth, Check, X, Search, Printer } from 'lucide-react';
+import { Minus, Plus, Trash2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { useBluetoothPrinter } from '@/hooks/useBluetoothPrinter';
 
 interface OrderSummaryProps {
   order: Order | null;
@@ -21,7 +20,6 @@ export function OrderSummary({
   onCompleteOrder, 
   onCancelOrder 
 }: OrderSummaryProps) {
-  const { isConnected, isConnecting, isScanning, scanForPrinters, disconnectPrinter, printReceipt, sendTestPrint } = useBluetoothPrinter();
   if (!order) {
     return (
       <Card className="h-full">
@@ -104,80 +102,21 @@ export function OrderSummary({
           </div>
         </div>
 
-        <div className="space-y-3 mt-6">
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              onClick={onCancelOrder}
-              className="flex-1"
-            >
-              Annuleer Bestelling
-            </Button>
-            <Button 
-              onClick={onCompleteOrder}
-              className="flex-1"
-              disabled={order.items.length === 0}
-            >
-              Voltooi Bestelling
-            </Button>
-          </div>
-          
-          <div className="space-y-2">
-            <Button
-              variant="outline"
-              onClick={isConnected ? disconnectPrinter : scanForPrinters}
-              disabled={isConnecting || isScanning}
-              className="w-full flex items-center gap-2"
-            >
-              {isScanning ? (
-                <>
-                  <Search className="h-4 w-4 animate-spin" />
-                  Scannen naar Printers...
-                </>
-              ) : isConnecting ? (
-                <>
-                  <Bluetooth className="h-4 w-4" />
-                  Verbinden...
-                </>
-              ) : isConnected ? (
-                <>
-                  <X className="h-4 w-4" />
-                  Printer Ontkoppelen
-                </>
-              ) : (
-                <>
-                  <Bluetooth className="h-4 w-4" />
-                  Bluetooth Printer Verbinden
-                </>
-              )}
-            </Button>
-            
-            {isConnected && (
-              <Button
-                variant="outline"
-                onClick={sendTestPrint}
-                className="w-full flex items-center gap-2"
-                size="sm"
-              >
-                <Printer className="h-4 w-4" />
-                Test Print
-              </Button>
-            )}
-            
-            <div className="flex items-center justify-center gap-2 text-sm">
-              {isConnected ? (
-                <div className="flex items-center gap-1 text-green-600">
-                  <Check className="h-4 w-4" />
-                  <span>✅ Printer Verbonden</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-1 text-muted-foreground">
-                  <X className="h-4 w-4" />
-                  <span>❌ Geen Printer Verbonden</span>
-                </div>
-              )}
-            </div>
-          </div>
+        <div className="flex gap-2 mt-6">
+          <Button 
+            variant="outline" 
+            onClick={onCancelOrder}
+            className="flex-1"
+          >
+            Annuleer Bestelling
+          </Button>
+          <Button 
+            onClick={onCompleteOrder}
+            className="flex-1"
+            disabled={order.items.length === 0}
+          >
+            Voltooi Bestelling
+          </Button>
         </div>
       </CardContent>
     </Card>
