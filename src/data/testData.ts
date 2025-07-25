@@ -543,30 +543,30 @@ export const menuItems: MenuItem[] = [
 },
 
 {
-  id: '-doner-kebab-1',
+  id: 'pizza-73',
   name: 'Small Doner Kebab',
   description: '',
   price: 12.5,
-  category: '# doner kebab',
-  subcategory: ''
+  category: 'pizza',
+  subcategory: 'Small'
 },
 
 {
-  id: '-doner-kebab-2',
+  id: 'pizza-74',
   name: 'Medium Doner Kebab',
   description: '',
   price: 14.5,
-  category: '# doner kebab',
-  subcategory: ''
+  category: 'pizza',
+  subcategory: 'Medium'
 },
 
 {
-  id: '-doner-kebab-3',
+  id: 'pizza-75',
   name: 'Large Doner Kebab',
   description: '',
   price: 18.5,
-  category: '# doner kebab',
-  subcategory: ''
+  category: 'pizza',
+  subcategory: 'Large'
 },
 
 {

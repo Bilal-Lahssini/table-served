@@ -45,7 +45,7 @@ export function TableCard({ table, onClick }: TableCardProps) {
       onClick={() => onClick(table)}
     >
       <CardContent className="p-6 text-center">
-        <div className="text-4xl mb-2">{table.id === 999 ? '🥡' : '🪑'}</div>
+        <div className="text-4xl mb-2">{table.id === 999 ? '🍕' : '🪑'}</div>
         <h3 className="font-semibold text-lg mb-2">{table.name}</h3>
         <Badge className={getStatusColor(table.status)}>
           <span className="mr-1">{getStatusIcon(table.status)}</span>
