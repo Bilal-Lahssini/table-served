@@ -6,10 +6,12 @@ export function usePOSStore() {
   const [tables, setTables] = useState<Table[]>(initialTables);
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
+  const [discountApplied, setDiscountApplied] = useState<boolean>(false);
 
-  const selectTable = useCallback((table: Table) => {
+  const selectTable = useCallback((table: Table | null) => {
     setSelectedTable(table);
-    setCurrentOrder(table.currentOrder || null);
+    setCurrentOrder(table?.currentOrder || null);
+    setDiscountApplied(false);
   }, []);
 
   const addItemToOrder = useCallback((menuItem: MenuItem) => {
@@ -143,6 +145,12 @@ export function usePOSStore() {
     // Clear current order and selected table
     setCurrentOrder(null);
     setSelectedTable(null);
+    setDiscountApplied(false);
+  }, [selectedTable]);
+
+  const toggleDiscount = useCallback(() => {
+    if (!selectedTable || selectedTable.id !== 999) return; // Only for takeaway
+    setDiscountApplied(prev => !prev);
   }, [selectedTable]);
 
   // Update table with current order whenever order changes
@@ -171,11 +179,13 @@ export function usePOSStore() {
     tables,
     selectedTable,
     currentOrder,
+    discountApplied,
     selectTable,
     addItemToOrder,
     updateItemQuantity,
     removeItemFromOrder,
     completeOrder,
-    cancelOrder
+    cancelOrder,
+    toggleDiscount
   };
 }

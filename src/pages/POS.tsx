@@ -18,12 +18,14 @@ export default function POS() {
     tables,
     selectedTable,
     currentOrder,
+    discountApplied,
     selectTable,
     addItemToOrder,
     updateItemQuantity,
     removeItemFromOrder,
     completeOrder,
-    cancelOrder
+    cancelOrder,
+    toggleDiscount
   } = usePOSStore();
 
   const handleBackToTables = () => {
@@ -102,7 +104,9 @@ export default function POS() {
                   Terug naar Tafels
                 </Button>
                 <div>
-                  <h2 className="text-2xl font-bold">Tafel {selectedTable.id}</h2>
+                  <h2 className="text-2xl font-bold">
+                    {selectedTable.id === 999 ? 'Afhaal Bestelling' : `Tafel ${selectedTable.id}`}
+                  </h2>
                   <p className="text-muted-foreground">{selectedTable.name}</p>
                 </div>
               </div>
@@ -171,6 +175,9 @@ export default function POS() {
                   onRemoveItem={removeItemFromOrder}
                   onCompleteOrder={completeOrder}
                   onCancelOrder={cancelOrder}
+                  isTakeaway={selectedTable?.id === 999}
+                  discountApplied={discountApplied}
+                  onToggleDiscount={toggleDiscount}
                 />
               </div>
             </div>

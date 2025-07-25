@@ -11,6 +11,9 @@ interface OrderSummaryProps {
   onRemoveItem: (itemId: string) => void;
   onCompleteOrder: () => void;
   onCancelOrder: () => void;
+  isTakeaway?: boolean;
+  discountApplied?: boolean;
+  onToggleDiscount?: () => void;
 }
 
 export function OrderSummary({ 
@@ -18,7 +21,10 @@ export function OrderSummary({
   onUpdateQuantity, 
   onRemoveItem, 
   onCompleteOrder, 
-  onCancelOrder 
+  onCancelOrder,
+  isTakeaway = false,
+  discountApplied = false,
+  onToggleDiscount
 }: OrderSummaryProps) {
   if (!order) {
     return (
@@ -35,9 +41,12 @@ export function OrderSummary({
     );
   }
 
-  const total = order.items.reduce((sum, item) => 
+  const subtotal = order.items.reduce((sum, item) => 
     sum + (item.menuItem.price * item.quantity), 0
   );
+  
+  const discountAmount = isTakeaway && discountApplied ? subtotal * 0.15 : 0;
+  const total = subtotal - discountAmount;
 
   return (
     <Card className="h-full flex flex-col">
@@ -96,11 +105,35 @@ export function OrderSummary({
 
         <div className="space-y-2">
           <Separator />
+          {isTakeaway && discountApplied && (
+            <>
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>Subtotaal:</span>
+                <span>€{subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm text-green-600">
+                <span>15% Korting:</span>
+                <span>-€{discountAmount.toFixed(2)}</span>
+              </div>
+            </>
+          )}
           <div className="flex justify-between font-bold text-lg">
             <span>Totaal:</span>
             <span>€{total.toFixed(2)}</span>
           </div>
         </div>
+
+        {isTakeaway && onToggleDiscount && (
+          <div className="mt-4">
+            <Button 
+              variant={discountApplied ? "default" : "outline"}
+              onClick={onToggleDiscount}
+              className="w-full"
+            >
+              {discountApplied ? '15% Korting Toegepast ✓' : '15% Korting Toepassen'}
+            </Button>
+          </div>
+        )}
 
         <div className="flex gap-2 mt-6">
           <Button 
