@@ -1,6 +1,39 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import '../types/bluetooth';
+
+// Bluetooth Web API type definitions
+declare global {
+  interface Navigator {
+    bluetooth?: Bluetooth;
+  }
+  
+  interface Bluetooth {
+    requestDevice(options?: RequestDeviceOptions): Promise<BluetoothDevice>;
+  }
+  
+  interface RequestDeviceOptions {
+    filters?: BluetoothLEScanFilter[];
+    optionalServices?: (number | string)[];
+  }
+  
+  interface BluetoothLEScanFilter {
+    services?: (number | string)[];
+    name?: string;
+    namePrefix?: string;
+  }
+  
+  interface BluetoothDevice {
+    id: string;
+    name?: string;
+    gatt?: BluetoothRemoteGATTServer;
+  }
+  
+  interface BluetoothRemoteGATTServer {
+    connected: boolean;
+    connect(): Promise<BluetoothRemoteGATTServer>;
+    disconnect(): void;
+  }
+}
 
 interface BluetoothPrinter {
   device: BluetoothDevice;
