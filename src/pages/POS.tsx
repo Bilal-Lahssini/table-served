@@ -53,7 +53,7 @@ export default function POS() {
     if (item.category !== selectedCategory) return false;
     if (selectedSubcategory && item.subcategory !== selectedSubcategory) return false;
     return true;
-  });
+  }).sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <div className="min-h-screen bg-background p-6">
