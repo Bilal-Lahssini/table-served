@@ -52,7 +52,7 @@ export function OrderSummary({
     <Card className="h-full flex flex-col">
       <CardHeader>
         <div className="flex justify-between items-center">
-          <CardTitle>Tafel {order.tableId} Bestelling</CardTitle>
+          <CardTitle>{isTakeaway ? 'Afhaal Bestelling' : `Tafel ${order.tableId} Bestelling`}</CardTitle>
           <Badge variant="secondary">
             {order.status === 'active' ? 'Actief' : order.status === 'completed' ? 'Voltooid' : 'Geannuleerd'}
           </Badge>
