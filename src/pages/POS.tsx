@@ -13,7 +13,7 @@ import { ArrowLeft, ShoppingCart } from 'lucide-react';
 export default function POS() {
   const [selectedCategory, setSelectedCategory] = useState<MenuCategory>('drinks');
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
-  const [showOrderOverview, setShowOrderOverview] = useState(true);
+  const [showOrderOverview, setShowOrderOverview] = useState(false);
   
   const {
     tables,
@@ -33,7 +33,7 @@ export default function POS() {
     selectTable(null);
     setSelectedCategory('drinks');
     setSelectedSubcategory(null);
-    setShowOrderOverview(true);
+    setShowOrderOverview(false);
   };
 
   const subcategories = {
@@ -91,37 +91,37 @@ export default function POS() {
           </div>
         ) : (
           /* Table Detail View */
-          <div className={`grid gap-6 ${showOrderOverview ? 'grid-cols-1 xl:grid-cols-3' : 'grid-cols-1'}`}>
+          <div className="w-full max-w-6xl mx-auto">
             {/* Menu Section */}
-            <div className={`space-y-6 ${showOrderOverview ? 'xl:col-span-2' : ''}`}>
+            <div className="space-y-6">
               {/* Back Button and Table Header */}
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-4">
-                  <Button
-                    onClick={handleBackToTables}
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center gap-2"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                    Terug naar Tafels
-                  </Button>
-                  <div>
-                    <h2 className="text-2xl font-bold">
-                      {selectedTable.id === 999 ? 'Afhaal Bestelling' : `Tafel ${selectedTable.id}`}
-                    </h2>
-                    <p className="text-muted-foreground">{selectedTable.name}</p>
-                  </div>
+              <div className="flex items-center gap-4 mb-6">
+                <Button
+                  onClick={handleBackToTables}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Terug naar Tafels
+                </Button>
+                <div>
+                  <h2 className="text-2xl font-bold">
+                    {selectedTable.id === 999 ? 'Afhaal Bestelling' : `Tafel ${selectedTable.id}`}
+                  </h2>
+                  <p className="text-muted-foreground">{selectedTable.name}</p>
                 </div>
-                
-                {/* Order Overview Toggle Button */}
+              </div>
+
+              {/* Order Overview Toggle Button */}
+              <div className="mb-6">
                 <Button
                   onClick={() => setShowOrderOverview(!showOrderOverview)}
                   variant={showOrderOverview ? "default" : "outline"}
                   className="flex items-center gap-2"
                 >
                   <ShoppingCart className="h-4 w-4" />
-                  Bestelling Overzicht
+                  {showOrderOverview ? 'Toon Menu' : 'Bestelling Overzicht'}
                   {currentOrder && currentOrder.items.length > 0 && (
                     <Badge variant="secondary" className="ml-1">
                       {currentOrder.items.reduce((sum, item) => sum + item.quantity, 0)}
@@ -130,6 +130,22 @@ export default function POS() {
                 </Button>
               </div>
 
+              {showOrderOverview ? (
+                /* Order Summary View */
+                <div className="animate-fade-in">
+                  <OrderSummary
+                    order={currentOrder}
+                    onUpdateQuantity={updateItemQuantity}
+                    onRemoveItem={removeItemFromOrder}
+                    onCompleteOrder={completeOrder}
+                    onCancelOrder={cancelOrder}
+                    isTakeaway={selectedTable?.id === 999}
+                    discountApplied={discountApplied}
+                    onToggleDiscount={toggleDiscount}
+                  />
+                </div>
+              ) : (
+                /* Menu View */
               <Card>
                 <CardHeader>
                   <CardTitle>Menu</CardTitle>
@@ -183,25 +199,8 @@ export default function POS() {
                   </div>
                 </CardContent>
               </Card>
+              )}
             </div>
-
-            {/* Order Summary */}
-            {showOrderOverview && (
-              <div className="xl:col-span-1">
-                <div className="sticky top-6 animate-fade-in">
-                  <OrderSummary
-                    order={currentOrder}
-                    onUpdateQuantity={updateItemQuantity}
-                    onRemoveItem={removeItemFromOrder}
-                    onCompleteOrder={completeOrder}
-                    onCancelOrder={cancelOrder}
-                    isTakeaway={selectedTable?.id === 999}
-                    discountApplied={discountApplied}
-                    onToggleDiscount={toggleDiscount}
-                  />
-                </div>
-              </div>
-            )}
           </div>
         )}
       </div>
