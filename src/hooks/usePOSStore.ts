@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Table, Order, MenuItem, OrderItem } from '@/types/pos';
 import { initialTables } from '@/data/testData';
+import { toast } from '@/hooks/use-toast';
 
 export function usePOSStore() {
   const [tables, setTables] = useState<Table[]>(initialTables);
@@ -49,11 +50,19 @@ export function usePOSStore() {
         sum + (item.menuItem.price * item.quantity), 0
       );
 
-      return {
+      const newOrder = {
         ...existingOrder,
         items: updatedItems,
         total
       };
+
+      // Show toast notification
+      toast({
+        title: "Toegevoegd",
+        description: `${menuItem.name} is toegevoegd aan de bestelling`,
+      });
+
+      return newOrder;
     });
   }, [selectedTable, currentOrder]);
 
