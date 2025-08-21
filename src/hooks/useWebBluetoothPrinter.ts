@@ -24,9 +24,14 @@ export function useWebBluetoothPrinter(): WebBluetoothPrinterHook {
     try {
       console.log('Requesting Bluetooth device...');
       
-      // Try different approaches to find printers
+      // Look specifically for TM-m30III printer
       const bluetoothDevice = await navigator.bluetooth.requestDevice({
-        acceptAllDevices: true,
+        filters: [
+          { name: 'TM-m30III' },
+          { namePrefix: 'TM-m30' },
+          { namePrefix: 'EPSON' },
+          { namePrefix: 'TM-' }
+        ],
         optionalServices: [
           '000018f0-0000-1000-8000-00805f9b34fb', // Common thermal printer
           '0000ff00-0000-1000-8000-00805f9b34fb', // Generic service
