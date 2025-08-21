@@ -83,7 +83,7 @@ export function useBluetoothPrinter(): BluetoothPrinterHook {
     if (!navigator.bluetooth) {
       toast({
         title: "Bluetooth niet ondersteund",
-        description: "Deze browser ondersteunt geen Web Bluetooth API.",
+        description: "Open deze pagina in Bluefy Web browser voor Bluetooth ondersteuning.",
         variant: "destructive"
       });
       throw new Error('Bluetooth not supported');
@@ -118,7 +118,7 @@ export function useBluetoothPrinter(): BluetoothPrinterHook {
       console.error('Bluetooth connection error:', error);
       toast({
         title: "Verbinding mislukt",
-        description: "Kon niet verbinden met de printer. Controleer of Bluetooth is ingeschakeld.",
+        description: "Kon niet verbinden met de printer. Gebruik Bluefy Web browser en controleer of Bluetooth is ingeschakeld.",
         variant: "destructive"
       });
       throw error;
