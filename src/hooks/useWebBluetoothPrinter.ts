@@ -112,14 +112,9 @@ export function useWebBluetoothPrinter(): WebBluetoothPrinterHook {
     try {
       console.log('Requesting Bluetooth device...');
       
-      // Look specifically for EPSON printers
+      // Look for ANY Bluetooth device - no restrictions
       const bluetoothDevice = await navigator.bluetooth.requestDevice({
-        filters: [
-          { namePrefix: 'EPSON' },
-          { name: 'TM-m30III' },
-          { namePrefix: 'TM-m30' },
-          { namePrefix: 'TM-' }
-        ],
+        acceptAllDevices: true,
         optionalServices: [
           '000018f0-0000-1000-8000-00805f9b34fb', // Common thermal printer
           '0000ff00-0000-1000-8000-00805f9b34fb', // Generic service
@@ -127,11 +122,20 @@ export function useWebBluetoothPrinter(): WebBluetoothPrinterHook {
           '0000180f-0000-1000-8000-00805f9b34fb', // Battery service
           '0000180a-0000-1000-8000-00805f9b34fb', // Device info
           '6e400001-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART
-          '12345678-1234-5678-9012-123456789abc'  // Custom service
+          '12345678-1234-5678-9012-123456789abc', // Custom service
+          '0000ffe0-0000-1000-8000-00805f9b34fb', // Serial service
+          '6e400001-b5a3-f393-e0a9-e50e24dcca9e'  // Another common service
         ]
       });
 
-      console.log('Device selected:', bluetoothDevice.name);
+      console.log('Device selected:', bluetoothDevice.name, 'ID:', bluetoothDevice.id);
+      
+      // Log device info
+      console.log('Device details:', {
+        name: bluetoothDevice.name,
+        id: bluetoothDevice.id,
+        connected: bluetoothDevice.gatt?.connected
+      });
 
       if (!bluetoothDevice.gatt) {
         throw new Error('GATT not available');
