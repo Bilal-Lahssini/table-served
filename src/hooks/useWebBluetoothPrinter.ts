@@ -22,56 +22,66 @@ export function useWebBluetoothPrinter(): WebBluetoothPrinterHook {
     setIsConnecting(true);
     
     try {
+      console.log('Requesting Bluetooth device...');
+      
+      // Try different approaches to find printers
       const bluetoothDevice = await navigator.bluetooth.requestDevice({
         acceptAllDevices: true,
-        optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb'] // Common printer service UUID
+        optionalServices: [
+          '000018f0-0000-1000-8000-00805f9b34fb', // Common thermal printer
+          '0000ff00-0000-1000-8000-00805f9b34fb', // Generic service
+          '49535343-fe7d-4ae5-8fa9-9fafd205e455', // HM-10 module
+          '0000180f-0000-1000-8000-00805f9b34fb', // Battery service
+          '0000180a-0000-1000-8000-00805f9b34fb', // Device info
+          '6e400001-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART
+          '12345678-1234-5678-9012-123456789abc'  // Custom service
+        ]
       });
+
+      console.log('Device selected:', bluetoothDevice.name);
 
       if (!bluetoothDevice.gatt) {
         throw new Error('GATT not available');
       }
 
+      console.log('Connecting to GATT server...');
       const server = await bluetoothDevice.gatt.connect();
+      console.log('Connected to GATT server');
       
-      // Try common printer service UUIDs
-      const serviceUUIDs = [
-        '000018f0-0000-1000-8000-00805f9b34fb',
-        '0000ff00-0000-1000-8000-00805f9b34fb',
-        '49535343-fe7d-4ae5-8fa9-9fafd205e455'
-      ];
+      // Get all available services first
+      console.log('Getting primary services...');
+      const services = await server.getPrimaryServices();
+      console.log('Available services:', services.map(s => s.uuid));
 
-      let service;
-      let writeCharacteristic;
+      let writeCharacteristic = null;
 
-      for (const uuid of serviceUUIDs) {
+      // Try to find a writable characteristic in any service
+      for (const service of services) {
         try {
-          service = await server.getPrimaryService(uuid);
+          console.log(`Checking service: ${service.uuid}`);
+          const characteristics = await service.getCharacteristics();
+          console.log(`Characteristics in ${service.uuid}:`, characteristics.map(c => c.uuid));
           
-          const characteristicUUIDs = [
-            '0000ff01-0000-1000-8000-00805f9b34fb',
-            '49535343-1e4d-4bd9-ba61-23c647249616',
-            '000018f1-0000-1000-8000-00805f9b34fb'
-          ];
-
-          for (const charUuid of characteristicUUIDs) {
-            try {
-              writeCharacteristic = await service.getCharacteristic(charUuid);
+          for (const char of characteristics) {
+            if (char.properties.write || char.properties.writeWithoutResponse) {
+              console.log(`Found writable characteristic: ${char.uuid}`);
+              writeCharacteristic = char;
               break;
-            } catch (e) {
-              continue;
             }
           }
-
+          
           if (writeCharacteristic) break;
         } catch (e) {
+          console.log(`Error checking service ${service.uuid}:`, e);
           continue;
         }
       }
 
       if (!writeCharacteristic) {
-        throw new Error('Could not find write characteristic');
+        throw new Error('No writable characteristic found. Available services: ' + services.map(s => s.uuid).join(', '));
       }
 
+      console.log('Successfully connected to printer');
       setDevice(bluetoothDevice);
       setCharacteristic(writeCharacteristic);
       setIsConnected(true);
