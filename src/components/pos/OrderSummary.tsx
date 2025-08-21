@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Minus, Plus, Trash2, Printer } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { useWebBluetoothPrinter } from '@/hooks/useWebBluetoothPrinter';
+import { useEpsonPrinter } from '@/hooks/useEpsonPrinter';
 
 interface OrderSummaryProps {
   order: Order | null;
@@ -27,7 +27,7 @@ export function OrderSummary({
   discountApplied = false,
   onToggleDiscount
 }: OrderSummaryProps) {
-  const { connectAndPrint, isConnecting, isConnected } = useWebBluetoothPrinter();
+  const { connectAndPrint, isConnecting, isConnected } = useEpsonPrinter();
 
   const handlePrintTicket = async () => {
     if (!order) return;
