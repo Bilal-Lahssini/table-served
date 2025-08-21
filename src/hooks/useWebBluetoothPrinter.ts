@@ -4,6 +4,7 @@ import { Order } from '@/types/pos';
 interface WebBluetoothPrinterHook {
   isConnected: boolean;
   isConnecting: boolean;
+  connectionType: 'bluetooth' | 'wifi' | null;
   connectAndPrint: (order: Order, isTakeaway: boolean, discountApplied: boolean) => Promise<void>;
   disconnect: () => Promise<void>;
 }
@@ -11,8 +12,95 @@ interface WebBluetoothPrinterHook {
 export function useWebBluetoothPrinter(): WebBluetoothPrinterHook {
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [connectionType, setConnectionType] = useState<'bluetooth' | 'wifi' | null>(null);
   const [device, setDevice] = useState<BluetoothDevice | null>(null);
   const [characteristic, setCharacteristic] = useState<BluetoothRemoteGATTCharacteristic | null>(null);
+  const [printerIP, setPrinterIP] = useState<string | null>(null);
+
+  const connectToWiFiPrinter = useCallback(async () => {
+    console.log('Attempting WiFi printer connection...');
+    
+    // Common IP ranges for EPSON printers
+    const commonIPs = [
+      '192.168.1.100', '192.168.1.101', '192.168.1.102', '192.168.1.103',
+      '192.168.0.100', '192.168.0.101', '192.168.0.102', '192.168.0.103',
+      '10.0.0.100', '10.0.0.101', '10.0.0.102', '10.0.0.103'
+    ];
+    
+    // Ask user for printer IP or try common ones
+    const userIP = prompt('Enter printer IP address (or leave empty to auto-detect):');
+    const ipsToTry = userIP ? [userIP] : commonIPs;
+    
+    for (const ip of ipsToTry) {
+      try {
+        console.log(`Trying printer at ${ip}...`);
+        
+        // Test connection with a simple HTTP request
+        const response = await fetch(`http://${ip}:631/`, {
+          method: 'GET',
+          mode: 'no-cors',
+          signal: AbortSignal.timeout(3000)
+        });
+        
+        console.log(`Found printer at ${ip}`);
+        setPrinterIP(ip);
+        setConnectionType('wifi');
+        setIsConnected(true);
+        return;
+      } catch (error) {
+        console.log(`No printer found at ${ip}`);
+        continue;
+      }
+    }
+    
+    throw new Error('No WiFi printer found. Make sure your EPSON printer is connected to the same network.');
+  }, []);
+
+  const printViaWiFi = useCallback(async (receiptData: string) => {
+    if (!printerIP) {
+      throw new Error('No WiFi printer connected');
+    }
+
+    try {
+      console.log(`Printing via WiFi to ${printerIP}...`);
+      
+      // Try different EPSON printer endpoints
+      const endpoints = [
+        `http://${printerIP}:9100/`, // Raw TCP port
+        `http://${printerIP}:631/printers/`, // CUPS
+        `http://${printerIP}/cgi-bin/epos/service.cgi` // EPSON ePOS
+      ];
+      
+      const encoder = new TextEncoder();
+      const data = encoder.encode(receiptData);
+      
+      for (const endpoint of endpoints) {
+        try {
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/vnd.epson.epos-print',
+            },
+            body: data,
+            signal: AbortSignal.timeout(10000)
+          });
+          
+          if (response.ok) {
+            console.log(`Successfully printed via ${endpoint}`);
+            return;
+          }
+        } catch (e) {
+          console.log(`Failed to print via ${endpoint}:`, e);
+          continue;
+        }
+      }
+      
+      throw new Error('Failed to print via WiFi');
+    } catch (error) {
+      console.error('WiFi print failed:', error);
+      throw error;
+    }
+  }, [printerIP]);
 
   const connectToPrinter = useCallback(async () => {
     if (!navigator.bluetooth) {
@@ -86,9 +174,9 @@ export function useWebBluetoothPrinter(): WebBluetoothPrinterHook {
         throw new Error('No writable characteristic found. Available services: ' + services.map(s => s.uuid).join(', '));
       }
 
-      console.log('Successfully connected to printer');
       setDevice(bluetoothDevice);
       setCharacteristic(writeCharacteristic);
+      setConnectionType('bluetooth');
       setIsConnected(true);
     } catch (error) {
       console.error('Connection failed:', error);
@@ -180,16 +268,28 @@ export function useWebBluetoothPrinter(): WebBluetoothPrinterHook {
   const connectAndPrint = useCallback(async (order: Order, isTakeaway: boolean, discountApplied: boolean) => {
     try {
       if (!isConnected) {
-        await connectToPrinter();
+        // Try WiFi first, then Bluetooth
+        try {
+          console.log('Trying WiFi connection first...');
+          await connectToWiFiPrinter();
+        } catch (wifiError) {
+          console.log('WiFi failed, trying Bluetooth...', wifiError);
+          await connectToPrinter();
+        }
       }
       
       const receiptData = formatReceipt(order, isTakeaway, discountApplied);
-      await printReceipt(receiptData);
+      
+      if (connectionType === 'wifi') {
+        await printViaWiFi(receiptData);
+      } else {
+        await printReceipt(receiptData);
+      }
     } catch (error) {
       console.error('Print operation failed:', error);
       throw error;
     }
-  }, [isConnected, connectToPrinter, formatReceipt, printReceipt]);
+  }, [isConnected, connectionType, connectToWiFiPrinter, connectToPrinter, formatReceipt, printViaWiFi, printReceipt]);
 
   const disconnect = useCallback(async () => {
     if (device && device.gatt && device.gatt.connected) {
@@ -197,12 +297,15 @@ export function useWebBluetoothPrinter(): WebBluetoothPrinterHook {
     }
     setDevice(null);
     setCharacteristic(null);
+    setPrinterIP(null);
+    setConnectionType(null);
     setIsConnected(false);
   }, [device]);
 
   return {
     isConnected,
     isConnecting,
+    connectionType,
     connectAndPrint,
     disconnect
   };
