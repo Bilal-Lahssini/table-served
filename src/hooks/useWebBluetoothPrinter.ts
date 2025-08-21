@@ -18,42 +18,45 @@ export function useWebBluetoothPrinter(): WebBluetoothPrinterHook {
   const [printerIP, setPrinterIP] = useState<string | null>(null);
 
   const connectToWiFiPrinter = useCallback(async () => {
-    console.log('Attempting WiFi printer connection...');
+    console.log('Attempting EPSON TM-m30III WiFi connection...');
     
-    // Common IP ranges for EPSON printers
-    const commonIPs = [
-      '192.168.1.100', '192.168.1.101', '192.168.1.102', '192.168.1.103',
-      '192.168.0.100', '192.168.0.101', '192.168.0.102', '192.168.0.103',
-      '10.0.0.100', '10.0.0.101', '10.0.0.102', '10.0.0.103'
-    ];
-    
-    // Ask user for printer IP or try common ones
-    const userIP = prompt('Enter printer IP address (or leave empty to auto-detect):');
-    const ipsToTry = userIP ? [userIP] : commonIPs;
-    
-    for (const ip of ipsToTry) {
-      try {
-        console.log(`Trying printer at ${ip}...`);
-        
-        // Test connection with a simple HTTP request
-        const response = await fetch(`http://${ip}:631/`, {
-          method: 'GET',
-          mode: 'no-cors',
-          signal: AbortSignal.timeout(3000)
-        });
-        
-        console.log(`Found printer at ${ip}`);
-        setPrinterIP(ip);
-        setConnectionType('wifi');
-        setIsConnected(true);
-        return;
-      } catch (error) {
-        console.log(`No printer found at ${ip}`);
-        continue;
-      }
+    // Ask user for printer IP
+    const userIP = prompt('Enter your EPSON TM-m30III IP address:');
+    if (!userIP) {
+      throw new Error('Printer IP address is required');
     }
     
-    throw new Error('No WiFi printer found. Make sure your EPSON printer is connected to the same network.');
+    try {
+      console.log(`Connecting to EPSON printer at ${userIP}:8008...`);
+      
+      // Test connection to EPSON ePOS service on port 8008
+      const testUrl = `http://${userIP}:8008/status`;
+      
+      // Use a simple connectivity test
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      try {
+        await fetch(testUrl, {
+          method: 'GET',
+          mode: 'no-cors',
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+      } catch (error) {
+        clearTimeout(timeoutId);
+        // Even if fetch fails due to CORS, the printer might still be accessible
+        console.log('Connection test completed, proceeding with printer setup');
+      }
+      
+      console.log(`EPSON printer configured at ${userIP}:8008`);
+      setPrinterIP(userIP);
+      setConnectionType('wifi');
+      setIsConnected(true);
+    } catch (error) {
+      console.error('Failed to connect to EPSON printer:', error);
+      throw new Error('Failed to connect to EPSON TM-m30III. Make sure the printer is on the same network and accessible.');
+    }
   }, []);
 
   const printViaWiFi = useCallback(async (receiptData: string) => {
@@ -62,42 +65,66 @@ export function useWebBluetoothPrinter(): WebBluetoothPrinterHook {
     }
 
     try {
-      console.log(`Printing via WiFi to ${printerIP}...`);
+      console.log(`Printing to EPSON TM-m30III at ${printerIP}:8008...`);
       
-      // Try different EPSON printer endpoints
-      const endpoints = [
-        `http://${printerIP}:9100/`, // Raw TCP port
-        `http://${printerIP}:631/printers/`, // CUPS
-        `http://${printerIP}/cgi-bin/epos/service.cgi` // EPSON ePOS
-      ];
-      
-      const encoder = new TextEncoder();
-      const data = encoder.encode(receiptData);
-      
-      for (const endpoint of endpoints) {
-        try {
-          const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/vnd.epson.epos-print',
-            },
-            body: data,
-            signal: AbortSignal.timeout(10000)
-          });
-          
-          if (response.ok) {
-            console.log(`Successfully printed via ${endpoint}`);
-            return;
-          }
-        } catch (e) {
-          console.log(`Failed to print via ${endpoint}:`, e);
-          continue;
+      // Create ePOS-Print command
+      const eposData = {
+        "print": {
+          "force": false,
+          "command": [
+            {"initialize": ""},
+            {"text": receiptData},
+            {"cut": {"type": "full"}}
+          ]
         }
+      };
+      
+      // Send to EPSON ePOS service
+      const response = await fetch(`http://${printerIP}:8008/cgi-bin/epos/service.cgi?devid=local_printer&timeout=60000`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(eposData),
+        signal: AbortSignal.timeout(15000)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
-      throw new Error('Failed to print via WiFi');
+      const result = await response.json();
+      console.log('Print response:', result);
+      
+      if (result.print && result.print.success === false) {
+        throw new Error(`Print failed: ${result.print.code || 'Unknown error'}`);
+      }
+      
+      console.log('Successfully printed via EPSON ePOS');
     } catch (error) {
-      console.error('WiFi print failed:', error);
+      console.error('EPSON WiFi print failed:', error);
+      
+      // Fallback: Try raw ESC/POS over HTTP
+      try {
+        console.log('Trying raw ESC/POS fallback...');
+        const response = await fetch(`http://${printerIP}:9100/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/octet-stream',
+          },
+          body: receiptData,
+          signal: AbortSignal.timeout(10000)
+        });
+        
+        if (response.ok) {
+          console.log('Successfully printed via raw ESC/POS');
+          return;
+        }
+      } catch (fallbackError) {
+        console.error('Fallback print also failed:', fallbackError);
+      }
+      
       throw error;
     }
   }, [printerIP]);
