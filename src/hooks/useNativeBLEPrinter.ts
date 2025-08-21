@@ -1,66 +1,21 @@
 import { useState, useCallback } from 'react';
 import { Order } from '@/types/pos';
 import { toast } from '@/hooks/use-toast';
+import { BleClient, BleDevice } from '@capacitor-community/bluetooth-le';
 
-// Web Bluetooth API type declarations
-declare global {
-  interface Navigator {
-    bluetooth: Bluetooth;
-  }
-  
-  interface Bluetooth {
-    requestDevice(options: RequestDeviceOptions): Promise<BluetoothDevice>;
-  }
-  
-  interface RequestDeviceOptions {
-    filters?: BluetoothLEScanFilter[];
-    optionalServices?: BluetoothServiceUUID[];
-  }
-  
-  interface BluetoothLEScanFilter {
-    services?: BluetoothServiceUUID[];
-    name?: string;
-    namePrefix?: string;
-  }
-  
-  interface BluetoothDevice {
-    id: string;
-    name?: string;
-    gatt?: BluetoothRemoteGATTServer;
-  }
-  
-  interface BluetoothRemoteGATTServer {
-    connected: boolean;
-    connect(): Promise<BluetoothRemoteGATTServer>;
-    disconnect(): void;
-    getPrimaryService(service: BluetoothServiceUUID): Promise<BluetoothRemoteGATTService>;
-  }
-  
-  interface BluetoothRemoteGATTService {
-    getCharacteristic(characteristic: BluetoothServiceUUID): Promise<BluetoothRemoteGATTCharacteristic>;
-  }
-  
-  interface BluetoothRemoteGATTCharacteristic {
-    writeValue(value: BufferSource): Promise<void>;
-  }
-  
-  type BluetoothServiceUUID = string;
-}
-
-interface BluetoothPrinterHook {
+interface NativeBLEPrinterHook {
   isConnected: boolean;
   isConnecting: boolean;
   connectAndPrint: (order: Order, isTakeaway: boolean, discountApplied: boolean) => Promise<void>;
   disconnect: () => Promise<void>;
 }
 
-export function useBluetoothPrinter(): BluetoothPrinterHook {
-  const [device, setDevice] = useState<BluetoothDevice | null>(null);
-  const [characteristic, setCharacteristic] = useState<BluetoothRemoteGATTCharacteristic | null>(null);
+export function useNativeBLEPrinter(): NativeBLEPrinterHook {
+  const [device, setDevice] = useState<BleDevice | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
 
-  // ESC/POS commands for Epson TM-m30III
+  // ESC/POS commands for thermal printers
   const ESC = '\x1B';
   const GS = '\x1D';
   
@@ -80,45 +35,35 @@ export function useBluetoothPrinter(): BluetoothPrinterHook {
   };
 
   const connectToPrinter = useCallback(async (): Promise<void> => {
-    if (!navigator.bluetooth) {
-      toast({
-        title: "Bluetooth niet ondersteund",
-        description: "Open deze pagina in Bluefy Web browser voor Bluetooth ondersteuning.",
-        variant: "destructive"
-      });
-      throw new Error('Bluetooth not supported');
-    }
-
     try {
       setIsConnecting(true);
       
-      const device = await navigator.bluetooth.requestDevice({
-        filters: [
-          { services: ['000018f0-0000-1000-8000-00805f9b34fb'] }, // Epson service
-          { namePrefix: 'TM-' }, // Epson TM series
-        ],
-        optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
+      // Initialize BLE
+      await BleClient.initialize();
+      
+      // Request device scan
+      const device = await BleClient.requestDevice({
+        services: ['000018f0-0000-1000-8000-00805f9b34fb'], // Epson service UUID
+        namePrefix: 'TM-',
+        optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb'],
       });
 
-      const server = await device.gatt?.connect();
-      if (!server) throw new Error('Failed to connect to GATT server');
-
-      const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
-      const char = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb');
-
+      // Connect to device
+      await BleClient.connect(device.deviceId);
+      
       setDevice(device);
-      setCharacteristic(char);
       setIsConnected(true);
       
       toast({
         title: "Printer verbonden",
-        description: `Verbonden met ${device.name || 'Bluetooth printer'}`,
+        description: `Verbonden met ${device.name || 'BLE printer'}`,
       });
+      
     } catch (error) {
-      console.error('Bluetooth connection error:', error);
+      console.error('BLE connection error:', error);
       toast({
         title: "Verbinding mislukt",
-        description: "Kon niet verbinden met de printer. Gebruik Bluefy Web browser en controleer of Bluetooth is ingeschakeld.",
+        description: "Kon niet verbinden met de BLE printer. Controleer of Bluetooth is ingeschakeld.",
         variant: "destructive"
       });
       throw error;
@@ -190,7 +135,7 @@ export function useBluetoothPrinter(): BluetoothPrinterHook {
   }, [commands]);
 
   const printReceipt = useCallback(async (receiptData: string): Promise<void> => {
-    if (!characteristic) {
+    if (!device) {
       throw new Error('No printer connected');
     }
 
@@ -198,29 +143,41 @@ export function useBluetoothPrinter(): BluetoothPrinterHook {
       const encoder = new TextEncoder();
       const data = encoder.encode(receiptData);
       
-      // Split data into chunks of 20 bytes (BLE limitation)
+      // Convert to DataView for BLE transmission
+      const dataView = new DataView(data.buffer);
+      
+      // Send data in chunks (BLE has packet size limitations)
       const chunkSize = 20;
       for (let i = 0; i < data.length; i += chunkSize) {
-        const chunk = data.slice(i, i + chunkSize);
-        await characteristic.writeValue(chunk);
+        const end = Math.min(i + chunkSize, data.length);
+        const chunk = data.slice(i, end);
+        
+        await BleClient.write(
+          device.deviceId,
+          '000018f0-0000-1000-8000-00805f9b34fb', // Service UUID
+          '00002af1-0000-1000-8000-00805f9b34fb', // Characteristic UUID
+          new DataView(chunk.buffer)
+        );
+        
         // Small delay between chunks
         await new Promise(resolve => setTimeout(resolve, 10));
       }
       
       toast({
         title: "Ticket afgedrukt",
-        description: "Het ticket is succesvol verzonden naar de printer.",
+        description: "Het ticket is succesvol verzonden naar de BLE printer.",
       });
+      
     } catch (error) {
-      console.error('Print error:', error);
+      console.error('BLE print error:', error);
       toast({
         title: "Print fout",
-        description: "Er is een fout opgetreden tijdens het afdrukken.",
+        description: "Er is een fout opgetreden tijdens het afdrukken via BLE.",
         variant: "destructive"
       });
       throw error;
     }
-  }, [characteristic]);
+  }, [device]);
 
   const connectAndPrint = useCallback(async (order: Order, isTakeaway: boolean, discountApplied: boolean): Promise<void> => {
     try {
@@ -237,18 +194,22 @@ export function useBluetoothPrinter(): BluetoothPrinterHook {
   }, [isConnected, connectToPrinter, formatReceipt, printReceipt]);
 
   const disconnect = useCallback(async (): Promise<void> => {
-    if (device?.gatt?.connected) {
-      device.gatt.disconnect();
+    if (device && isConnected) {
+      try {
+        await BleClient.disconnect(device.deviceId);
+      } catch (error) {
+        console.error('Disconnect error:', error);
+      }
     }
+    
     setDevice(null);
-    setCharacteristic(null);
     setIsConnected(false);
     
     toast({
       title: "Printer losgekoppeld",
-      description: "De verbinding met de printer is verbroken.",
+      description: "BLE verbinding met de printer is verbroken.",
     });
-  }, [device]);
+  }, [device, isConnected]);
 
   return {
     isConnected,

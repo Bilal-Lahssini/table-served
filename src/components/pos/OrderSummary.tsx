@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Minus, Plus, Trash2, Printer } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { useBluetoothPrinter } from '@/hooks/useBluetoothPrinter';
+import { useNativeBLEPrinter } from '@/hooks/useNativeBLEPrinter';
 
 interface OrderSummaryProps {
   order: Order | null;
@@ -27,7 +27,7 @@ export function OrderSummary({
   discountApplied = false,
   onToggleDiscount
 }: OrderSummaryProps) {
-  const { isConnected, isConnecting, connectAndPrint } = useBluetoothPrinter();
+  const { connectAndPrint, isConnecting, isConnected } = useNativeBLEPrinter();
 
   const handlePrintTicket = async () => {
     if (!order) return;
