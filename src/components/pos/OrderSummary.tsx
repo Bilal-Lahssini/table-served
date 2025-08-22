@@ -63,36 +63,45 @@ export function OrderSummary({
     if (!order) return '';
     
     const now = new Date();
+    const date = now.toLocaleDateString('nl-NL');
+    const time = now.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
     let receipt = '';
     
     // Header
+    receipt += '----------------------------------------\n';
+    receipt += "PEPE'S RESTAURANT\n";
     receipt += '================================\n';
-    receipt += '         RESTAURANT RECEIPT\n';
-    receipt += '================================\n';
-    receipt += `${isTakeaway ? 'TAKEAWAY ORDER' : `TABLE ${order.tableId}`}\n`;
-    receipt += `Date: ${now.toLocaleDateString()}\n`;
-    receipt += `Time: ${now.toLocaleTimeString()}\n`;
+    receipt += `Datum: ${date} Tijd: ${time}\n`;
+    receipt += `Bestelling: ${isTakeaway ? 'AFHAAL' : `TAFEL ${order.tableId}`}\n`;
+    receipt += `Order ID: ${order.id.substring(0, 8)}\n`;
     receipt += '--------------------------------\n';
+    receipt += '\n';
     
-    // Items
+    // Items section
+    receipt += 'BESTELLING:\n';
     order.items.forEach((item) => {
-      receipt += `${item.menuItem.name}\n`;
-      receipt += `  ${item.quantity} x €${item.menuItem.price.toFixed(2)} = €${(item.quantity * item.menuItem.price).toFixed(2)}\n`;
+      const itemTotal = item.menuItem.price * item.quantity;
+      receipt += `${item.quantity}x ${item.menuItem.name}\n`;
+      receipt += `€${item.menuItem.price.toFixed(2)} x ${item.quantity} = €${itemTotal.toFixed(2)}\n`;
+      receipt += '\n';
     });
     
+    // Totals
     receipt += '--------------------------------\n';
     
-    // Totals
     if (isTakeaway && discountApplied) {
-      receipt += `Subtotal:           €${subtotal.toFixed(2)}\n`;
-      receipt += `15% Discount:      -€${discountAmount.toFixed(2)}\n`;
+      receipt += `Subtotaal: €${subtotal.toFixed(2)}\n`;
+      receipt += `15% Korting: -€${discountAmount.toFixed(2)}\n`;
       receipt += '--------------------------------\n';
     }
     
-    receipt += `TOTAL:              €${total.toFixed(2)}\n`;
-    receipt += '================================\n';
-    receipt += '        Thank you!\n';
-    receipt += '================================\n';
+    receipt += `TOTAAL: €${total.toFixed(2)}\n`;
+    receipt += '\n';
+    receipt += 'Bedankt voor uw bezoek!\n';
+    receipt += 'Tot ziens!\n';
+    receipt += '\n';
+    receipt += '--- CUT HERE ---\n';
+    receipt += '----------------------------------------\n';
     
     return receipt;
   };
