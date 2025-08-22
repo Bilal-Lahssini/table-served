@@ -2,9 +2,10 @@ import { Order, OrderItem } from '@/types/pos';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Minus, Plus, Trash2, Printer } from 'lucide-react';
+import { Minus, Plus, Trash2, Printer, RotateCcw } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { PrinterOptions } from './PrinterOptions';
+import { useEpsonPrinter } from '@/hooks/useEpsonPrinter';
+import { useToast } from '@/hooks/use-toast';
 
 interface OrderSummaryProps {
   order: Order | null;
@@ -27,6 +28,16 @@ export function OrderSummary({
   discountApplied = false,
   onToggleDiscount
 }: OrderSummaryProps) {
+  const { toast } = useToast();
+  const { isConnected, discoveredPrinter, isDiscovering, printTicket, rediscoverPrinter } = useEpsonPrinter();
+  const handlePrintTicket = async () => {
+    try {
+      await printTicket(order, isTakeaway, discountApplied);
+    } catch (error) {
+      console.error('Print error:', error);
+    }
+  };
+
   if (!order) {
     return (
       <Card className="h-full">
@@ -61,6 +72,33 @@ export function OrderSummary({
       </CardHeader>
       
       <CardContent className="flex-1 flex flex-col">
+        {/* Printer Status */}
+        <div className="flex items-center justify-between p-3 border rounded-lg mb-4">
+          <div className="flex items-center gap-2">
+            <Printer className="h-4 w-4" />
+            <span className="text-sm font-medium">
+              {discoveredPrinter ? discoveredPrinter.deviceName : 'Zoeken naar printer...'}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            {isDiscovering && <Badge variant="secondary" className="text-xs">Zoeken...</Badge>}
+            {discoveredPrinter && (
+              <Badge variant="default" className="text-xs">
+                {discoveredPrinter.ipAddress}
+              </Badge>
+            )}
+            {isConnected && <Badge variant="default" className="text-xs">Verbonden</Badge>}
+            <Button 
+              onClick={rediscoverPrinter}
+              size="sm" 
+              variant="outline"
+              disabled={isDiscovering}
+            >
+              <RotateCcw className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+
         <div className="flex-1 space-y-4 mb-6">
           {order.items.map((orderItem) => (
             <div key={orderItem.menuItem.id} className="flex items-center justify-between p-3 border rounded-lg">
@@ -138,11 +176,14 @@ export function OrderSummary({
 
         {/* Print Options */}
         <div className="mt-6">
-          <PrinterOptions 
-            order={order}
-            isTakeaway={isTakeaway}
-            discountApplied={discountApplied}
-          />
+          <Button 
+            onClick={handlePrintTicket}
+            disabled={order.items.length === 0 || !discoveredPrinter}
+            className="w-full flex items-center gap-2"
+          >
+            <Printer className="h-4 w-4" />
+            Print Ticket
+          </Button>
         </div>
 
         <div className="flex gap-2 mt-4">
