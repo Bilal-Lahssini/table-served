@@ -70,9 +70,19 @@ export class EpsonPrinterService {
   }
 
   private isSDKLoaded(): boolean {
-    return typeof window !== 'undefined' && 
-           !!window.epson && 
-           !!window.epson.ePOSPrint;
+    const loaded = typeof window !== 'undefined' && 
+                   !!window.epson && 
+                   !!window.epson.ePOSPrint;
+    
+    if (!loaded) {
+      console.error('Epson SDK check failed:', {
+        windowExists: typeof window !== 'undefined',
+        epsonExists: !!(window as any)?.epson,
+        ePOSPrintExists: !!(window as any)?.epson?.ePOSPrint
+      });
+    }
+    
+    return loaded;
   }
 
   async testConnection(ip?: string): Promise<boolean> {

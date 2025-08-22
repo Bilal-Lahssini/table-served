@@ -26,12 +26,21 @@ export function useEpsonPrinter(): UseEpsonPrinterReturn {
     const savedIP = printerService.getPrinterIP();
     setPrinterIPState(savedIP);
     
-    if (savedIP) {
-      // Test connection on mount if IP is configured
-      testConnection().catch(() => {
-        // Silent fail on mount
-      });
-    }
+    // Wait for SDK to load before testing connection
+    const checkSDKAndConnect = () => {
+      if (typeof window !== 'undefined' && window.epson && window.epson.ePOSPrint) {
+        if (savedIP) {
+          testConnection().catch(() => {
+            // Silent fail on mount
+          });
+        }
+      } else {
+        // Retry after a short delay
+        setTimeout(checkSDKAndConnect, 500);
+      }
+    };
+    
+    checkSDKAndConnect();
   }, []);
 
   const testConnection = useCallback(async (ip?: string): Promise<boolean> => {
