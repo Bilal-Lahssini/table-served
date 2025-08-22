@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Minus, Plus, Trash2, Printer, QrCode, Bluetooth, Smartphone, Wifi } from 'lucide-react';
+import { Minus, Plus, Trash2, Printer, QrCode } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useEpsonPrinter } from '@/hooks/useEpsonPrinter';
 import { useToast } from '@/hooks/use-toast';
@@ -31,7 +31,7 @@ export function OrderSummary({
   onToggleDiscount
 }: OrderSummaryProps) {
   const { toast } = useToast();
-  const { isSDKReady, printTicket, generateOrderQR, nativeBLE, webBLE } = useEpsonPrinter();
+  const { isSDKReady, printTicket, generateOrderQR } = useEpsonPrinter();
   
   const handlePrintTicket = async () => {
     try {
@@ -46,50 +46,6 @@ export function OrderSummary({
       await generateOrderQR(order, isTakeaway, discountApplied);
     } catch (error) {
       console.error('QR generation error:', error);
-    }
-  };
-
-  const handleNativeBLEPrint = async () => {
-    if (!order) return;
-    try {
-      await nativeBLE.connectAndPrint(order, isTakeaway, discountApplied);
-    } catch (error) {
-      console.error('Native BLE print error:', error);
-      toast({
-        title: "BLE Print Fout",
-        description: "Kon niet printen via Capacitor BLE. Controleer of de printer is ingeschakeld.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleWebBLEPrint = async () => {
-    if (!order) return;
-    try {
-      await webBLE.connectAndPrint(order, isTakeaway, discountApplied);
-    } catch (error) {
-      console.error('Web BLE print error:', error);
-      toast({
-        title: "Web Bluetooth Fout",
-        description: "Kon niet printen via Web Bluetooth. Deze functie werkt alleen in moderne browsers.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleBLEConnect = async () => {
-    try {
-      await nativeBLE.connectToPrinter();
-    } catch (error) {
-      console.error('BLE connect error:', error);
-    }
-  };
-
-  const handleBLEDisconnect = async () => {
-    try {
-      await nativeBLE.disconnect();
-    } catch (error) {
-      console.error('BLE disconnect error:', error);
     }
   };
 
@@ -212,65 +168,6 @@ export function OrderSummary({
             <Printer className="h-4 w-4" />
             Print Receipt
           </Button>
-          
-          {/* Bluetooth BLE Options */}
-          <div className="grid grid-cols-2 gap-2">
-            <Button 
-              onClick={handleNativeBLEPrint}
-              disabled={order.items.length === 0 || nativeBLE.isConnecting}
-              variant={nativeBLE.isConnected ? "default" : "outline"}
-              className="flex items-center gap-2"
-            >
-              <Bluetooth className="h-4 w-4" />
-              {nativeBLE.isConnecting ? 'Connecting...' : nativeBLE.isConnected ? 'BLE Print' : 'BLE Connect'}
-            </Button>
-            
-            <Button 
-              onClick={handleWebBLEPrint}
-              disabled={order.items.length === 0 || webBLE.isConnecting}
-              variant={webBLE.isConnected ? "default" : "outline"}
-              className="flex items-center gap-2"
-            >
-              <Wifi className="h-4 w-4" />
-              {webBLE.isConnecting ? 'Connecting...' : webBLE.isConnected ? 'Web BLE' : 'Web BLE'}
-            </Button>
-          </div>
-
-          {/* BLE Connection Status */}
-          {(nativeBLE.isConnected || webBLE.isConnected) && (
-            <div className="text-center text-sm text-muted-foreground">
-              {nativeBLE.isConnected && "📱 Native BLE Connected"}
-              {webBLE.isConnected && "🌐 Web Bluetooth Connected"}
-            </div>
-          )}
-          
-          {/* BLE Disconnect Options */}
-          {(nativeBLE.isConnected || webBLE.isConnected) && (
-            <div className="grid grid-cols-2 gap-2">
-              {nativeBLE.isConnected && (
-                <Button 
-                  onClick={handleBLEDisconnect}
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-2"
-                >
-                  <Bluetooth className="h-4 w-4" />
-                  Disconnect BLE
-                </Button>
-              )}
-              {webBLE.isConnected && (
-                <Button 
-                  onClick={webBLE.disconnect}
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-2"
-                >
-                  <Wifi className="h-4 w-4" />
-                  Disconnect Web
-                </Button>
-              )}
-            </div>
-          )}
           
           <Button 
             onClick={handleGenerateQR}
