@@ -155,179 +155,230 @@ export function useEpsonPrinter(): EpsonPrinterHook {
       console.log('🖨️ Preparing receipt for printing...');
       
       const receiptData = formatReceipt(order, isTakeaway, discountApplied);
-      const cleanReceiptData = receiptData
-        .replace(/\x1B\x61\x01/g, '') // Remove center alignment ESC codes
-        .replace(/\x1B\x61\x00/g, '') // Remove left alignment ESC codes
-        .replace(/\x1B\x45\x01/g, '') // Remove bold on ESC codes
-        .replace(/\x1B\x45\x00/g, '') // Remove bold off ESC codes
-        .replace(/\x1B\[[0-9;]*[mGKH]/g, ''); // Remove any other ESC codes
       
-      // Detect iPhone/iPad
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      // Try TM Utility integration first
+      const tryTMUtility = async (): Promise<boolean> => {
+        try {
+          console.log('🔌 Attempting TM Utility integration...');
+          
+          // TM Utility usually runs a local web server on port 8080 or 8008
+          const tmUtilityPorts = [8080, 8008, 8888, 9100];
+          
+          for (const port of tmUtilityPorts) {
+            try {
+              const tmUtilityUrl = `http://localhost:${port}/cgi-bin/epos/service.cgi`;
+              
+              // Create ESC/POS commands for TM Utility
+              const escPosData = receiptData
+                .replace(/\n/g, '\x0A') // Line feed
+                .replace(/================================/g, '--------------------------------'); // Adjust separator
+              
+              // Try to send print command to TM Utility
+              const response = await fetch(tmUtilityUrl, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                  'devid': 'local_printer',
+                  'timeout': '10000',
+                  'data': escPosData + '\x1D\x56\x00' // Add cut command
+                }),
+                signal: AbortSignal.timeout(3000)
+              });
+              
+              if (response.ok) {
+                console.log(`✅ TM Utility found on port ${port}`);
+                toast({
+                  title: "TM Utility Print Succesvol",
+                  description: "Receipt verzonden via Epson TM Utility.",
+                });
+                return true;
+              }
+            } catch (portError) {
+              console.log(`❌ TM Utility not found on port ${port}`);
+            }
+          }
+          
+          return false;
+        } catch (error) {
+          console.error('❌ TM Utility integration failed:', error);
+          return false;
+        }
+      };
       
-      if (isIOS) {
-        // iPhone/iPad: Use share sheet and optimized printing
+      // Try direct printer communication via TM Utility
+      const tmUtilitySuccess = await tryTMUtility();
+      
+      if (!tmUtilitySuccess) {
+        console.log('📋 TM Utility not available, falling back to browser printing...');
+        
         toast({
-          title: "iPhone Printing",
-          description: "Opening receipt for AirPrint or sharing...",
-          duration: 3000,
+          title: "TM Utility Niet Gevonden",
+          description: "Start Epson TM Utility voor directe printer toegang. Gebruik nu browser print.",
+          duration: 5000,
         });
         
-        // Create a mobile-optimized print page
-        const printWindow = window.open('', '_blank');
-        if (printWindow) {
-          printWindow.document.write(`
-            <!DOCTYPE html>
-            <html>
-              <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Receipt</title>
-                <style>
-                  @page { size: auto; margin: 0.5cm; }
-                  body {
-                    font-family: -apple-system, BlinkMacSystemFont, 'Courier New', monospace;
-                    font-size: 14px;
-                    line-height: 1.2;
-                    margin: 0;
-                    padding: 10px;
-                    background: white;
-                  }
-                  .receipt {
-                    max-width: 300px;
-                    margin: 0 auto;
-                    background: white;
-                    padding: 15px;
-                    border: 1px solid #ddd;
-                    border-radius: 8px;
-                  }
-                  .actions {
-                    position: fixed;
-                    bottom: 0;
-                    left: 0;
-                    right: 0;
-                    background: white;
-                    padding: 15px;
-                    border-top: 1px solid #ddd;
-                    display: flex;
-                    gap: 10px;
-                  }
-                  .btn {
-                    flex: 1;
-                    background: #007AFF;
-                    color: white;
-                    border: none;
-                    padding: 12px;
-                    border-radius: 8px;
-                    font-size: 16px;
-                    cursor: pointer;
-                  }
-                  .btn:active { background: #005BB5; }
-                  .btn.secondary { background: #8E8E93; }
-                  @media print {
-                    .actions { display: none; }
-                    .receipt { border: none; border-radius: 0; }
-                  }
-                </style>
-              </head>
-              <body>
-                <div class="receipt">
-                  <pre>${cleanReceiptData}</pre>
-                </div>
-                
-                <div class="actions">
-                  <button class="btn" onclick="window.print()">
-                    🖨️ AirPrint
-                  </button>
-                  <button class="btn secondary" onclick="shareReceipt()">
-                    📤 Share
-                  </button>
-                </div>
-                
-                <script>
-                  function shareReceipt() {
-                    const text = \`${cleanReceiptData}\`;
-                    
-                    if (navigator.share) {
-                      navigator.share({
-                        title: 'Receipt',
-                        text: text
-                      }).catch(console.log);
-                    } else {
-                      // Fallback: copy to clipboard
-                      navigator.clipboard.writeText(text).then(() => {
-                        alert('Receipt copied to clipboard!');
-                      });
+        // Fallback to browser printing
+        const cleanReceiptData = receiptData
+          .replace(/\x1B\x61\x01/g, '') // Remove center alignment ESC codes
+          .replace(/\x1B\x61\x00/g, '') // Remove left alignment ESC codes
+          .replace(/\x1B\x45\x01/g, '') // Remove bold on ESC codes
+          .replace(/\x1B\x45\x00/g, '') // Remove bold off ESC codes
+          .replace(/\x1B\[[0-9;]*[mGKH]/g, ''); // Remove any other ESC codes
+        
+        // Detect iPhone/iPad
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        
+        if (isIOS) {
+          // iPhone/iPad: Use AirPrint
+          const printWindow = window.open('', '_blank');
+          if (printWindow) {
+            printWindow.document.write(`
+              <!DOCTYPE html>
+              <html>
+                <head>
+                  <meta charset="UTF-8">
+                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                  <title>Receipt</title>
+                  <style>
+                    @page { size: auto; margin: 0.5cm; }
+                    body {
+                      font-family: -apple-system, BlinkMacSystemFont, 'Courier New', monospace;
+                      font-size: 14px;
+                      line-height: 1.2;
+                      margin: 0;
+                      padding: 10px;
+                      background: white;
                     }
-                  }
+                    .receipt {
+                      max-width: 300px;
+                      margin: 0 auto;
+                      background: white;
+                      padding: 15px;
+                      border: 1px solid #ddd;
+                      border-radius: 8px;
+                    }
+                    .actions {
+                      position: fixed;
+                      bottom: 0;
+                      left: 0;
+                      right: 0;
+                      background: white;
+                      padding: 15px;
+                      border-top: 1px solid #ddd;
+                      display: flex;
+                      gap: 10px;
+                    }
+                    .btn {
+                      flex: 1;
+                      background: #007AFF;
+                      color: white;
+                      border: none;
+                      padding: 12px;
+                      border-radius: 8px;
+                      font-size: 16px;
+                      cursor: pointer;
+                    }
+                    .btn:active { background: #005BB5; }
+                    .btn.secondary { background: #8E8E93; }
+                    @media print {
+                      .actions { display: none; }
+                      .receipt { border: none; border-radius: 0; }
+                    }
+                  </style>
+                </head>
+                <body>
+                  <div class="receipt">
+                    <pre>${cleanReceiptData}</pre>
+                  </div>
                   
-                  // Auto-focus for better iOS experience
-                  setTimeout(() => {
-                    document.querySelector('.btn').focus();
-                  }, 500);
-                </script>
-              </body>
-            </html>
-          `);
-          printWindow.document.close();
-        }
-        
-      } else {
-        // Desktop/Android: Use iframe printing for USB/system printers
-        const printFrame = document.createElement('iframe');
-        printFrame.style.position = 'absolute';
-        printFrame.style.top = '-10000px';
-        printFrame.style.left = '-10000px';
-        printFrame.style.width = '1px';
-        printFrame.style.height = '1px';
-        document.body.appendChild(printFrame);
-        
-        const printDoc = printFrame.contentDocument || printFrame.contentWindow?.document;
-        if (printDoc) {
-          printDoc.open();
-          printDoc.write(`
-            <!DOCTYPE html>
-            <html>
-              <head>
-                <meta charset="UTF-8">
-                <title>Receipt</title>
-                <style>
-                  @page {
-                    size: 80mm auto;
-                    margin: 0;
-                  }
-                  body {
-                    font-family: 'Courier New', monospace;
-                    font-size: 12px;
-                    line-height: 1.1;
-                    margin: 0;
-                    padding: 5mm;
-                    white-space: pre-wrap;
-                    word-wrap: break-word;
-                  }
-                </style>
-              </head>
-              <body>${cleanReceiptData}</body>
-            </html>
-          `);
-          printDoc.close();
+                  <div class="actions">
+                    <button class="btn" onclick="window.print()">
+                      🖨️ AirPrint
+                    </button>
+                    <button class="btn secondary" onclick="shareReceipt()">
+                      📤 Share
+                    </button>
+                  </div>
+                  
+                  <script>
+                    function shareReceipt() {
+                      const text = \`${cleanReceiptData}\`;
+                      
+                      if (navigator.share) {
+                        navigator.share({
+                          title: 'Receipt',
+                          text: text
+                        }).catch(console.log);
+                      } else {
+                        navigator.clipboard.writeText(text).then(() => {
+                          alert('Receipt copied to clipboard!');
+                        });
+                      }
+                    }
+                  </script>
+                </body>
+              </html>
+            `);
+            printWindow.document.close();
+          }
           
-          // Wait for content to load, then print
-          setTimeout(() => {
-            printFrame.contentWindow?.focus();
-            printFrame.contentWindow?.print();
+        } else {
+          // Desktop/Android: Use iframe printing for USB/system printers
+          const printFrame = document.createElement('iframe');
+          printFrame.style.position = 'absolute';
+          printFrame.style.top = '-10000px';
+          printFrame.style.left = '-10000px';
+          printFrame.style.width = '1px';
+          printFrame.style.height = '1px';
+          document.body.appendChild(printFrame);
+          
+          const printDoc = printFrame.contentDocument || printFrame.contentWindow?.document;
+          if (printDoc) {
+            printDoc.open();
+            printDoc.write(`
+              <!DOCTYPE html>
+              <html>
+                <head>
+                  <meta charset="UTF-8">
+                  <title>Receipt</title>
+                  <style>
+                    @page {
+                      size: 80mm auto;
+                      margin: 0;
+                    }
+                    body {
+                      font-family: 'Courier New', monospace;
+                      font-size: 12px;
+                      line-height: 1.1;
+                      margin: 0;
+                      padding: 5mm;
+                      white-space: pre-wrap;
+                      word-wrap: break-word;
+                    }
+                  </style>
+                </head>
+                <body>${cleanReceiptData}</body>
+              </html>
+            `);
+            printDoc.close();
             
-            // Clean up after printing
             setTimeout(() => {
-              document.body.removeChild(printFrame);
-            }, 1000);
-            
-            toast({
-              title: "Print Dialoog Geopend",
-              description: "Selecteer je USB/network printer in het dialoog.",
-              duration: 4000,
-            });
-          }, 100);
+              printFrame.contentWindow?.focus();
+              printFrame.contentWindow?.print();
+              
+              setTimeout(() => {
+                document.body.removeChild(printFrame);
+              }, 1000);
+              
+              toast({
+                title: "Browser Print Geopend",
+                description: "Selecteer je printer in het dialoog.",
+                duration: 4000,
+              });
+            }, 100);
+          }
         }
       }
       
@@ -335,7 +386,7 @@ export function useEpsonPrinter(): EpsonPrinterHook {
       console.error('❌ Print preparation error:', error);
       toast({
         title: "Print Fout",
-        description: "Kon print functie niet openen.",
+        description: "Kon print functie niet starten.",
         variant: "destructive",
       });
     }
