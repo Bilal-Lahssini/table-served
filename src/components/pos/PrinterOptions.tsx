@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Bluetooth, Wifi, Smartphone, Monitor, Printer } from 'lucide-react';
 import { useUnifiedPrinter } from '@/hooks/useUnifiedPrinter';
 import { useToast } from '@/hooks/use-toast';
-import { PrinterInstructions } from './PrinterInstructions';
+
 
 interface PrinterOptionsProps {
   order: Order;
@@ -173,10 +173,6 @@ export function PrinterOptions({ order, isTakeaway = false, discountApplied = fa
           )}
         </CardContent>
       </Card>
-      
-      <div className="mt-4">
-        <PrinterInstructions platform={platform} />
-      </div>
     </>
   );
 }
