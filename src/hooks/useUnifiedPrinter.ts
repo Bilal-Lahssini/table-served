@@ -72,54 +72,95 @@ export function useUnifiedPrinter(): UnifiedPrinterHook {
     return lines.join('\n');
   }, []);
 
-  const printViaWiFi = useCallback(async (order: Order, isTakeaway: boolean, discountApplied: boolean, printerIP: string) => {
+  const printViaWiFi = useCallback(async (order: Order, isTakeaway: boolean, discountApplied: boolean, printerIP: string): Promise<void> => {
     const receiptText = formatReceiptForWiFi(order, isTakeaway, discountApplied);
     
     try {
-      // Try Epson ePOS SDK first if available
-      if (platform === 'web' && typeof window !== 'undefined' && (window as any).epos) {
-        const epos = (window as any).epos;
-        const device = new epos.Device();
-        
-        device.connect(`http://${printerIP}`, 8008, () => {
-          const printer = device.createPrinter(device.ASB_NO_RESPONSE, 60000, 'TM-m30III');
-          
-          printer.addTextAlign(printer.ALIGN_CENTER);
-          printer.addText('===============================\n');
-          printer.addText('         RESTAURANT\n');
-          printer.addText('===============================\n');
-          printer.addTextAlign(printer.ALIGN_LEFT);
-          
-          const lines = receiptText.split('\n');
-          lines.forEach(line => {
-            if (line.trim()) {
-              printer.addText(line + '\n');
-            }
-          });
-          
-          printer.addCut(printer.CUT_FEED);
-          printer.send();
-          
-          device.disconnect();
-          console.log('WiFi print successful via ePOS SDK');
-        });
-        return;
-      }
+      // Import SDK manager
+      const { epsonSDK } = await import('@/utils/epsonSDK');
       
-      // Fallback: Try direct HTTP (will likely fail due to CORS in browser)
-      if (platform !== 'web') {
-        // For mobile platforms, try HTTP request
+      // For web platform, try Epson ePOS SDK
+      if (platform === 'web') {
+        try {
+          console.log('🔄 Checking Epson SDK availability...');
+          const sdkStatus = epsonSDK.getSDKStatus();
+          console.log('📊 SDK Status:', sdkStatus);
+          
+          // Try to wait for SDK or load manually
+          let sdkReady = false;
+          if (!epsonSDK.isSDKAvailable()) {
+            console.log('⏳ Waiting for Epson SDK to load...');
+            try {
+              await epsonSDK.waitForSDK();
+              sdkReady = true;
+            } catch (error) {
+              console.log('🔄 Trying manual SDK loading...');
+              await epsonSDK.loadSDKManually();
+              await epsonSDK.waitForSDK();
+              sdkReady = true;
+            }
+          } else {
+            sdkReady = true;
+          }
+          
+          if (sdkReady) {
+            console.log('✅ Epson SDK ready, attempting WiFi print...');
+            const epos = epsonSDK.getEPOS();
+            
+            await new Promise<void>((resolve, reject) => {
+              const device = new epos.Device();
+              
+              device.connect(`http://${printerIP}`, 8008, () => {
+                console.log('🔗 Connected to printer via WiFi');
+                const printer = device.createPrinter(device.ASB_NO_RESPONSE, 60000, 'TM-m30III');
+                
+                // Format receipt for Epson printer
+                printer.addTextAlign(printer.ALIGN_CENTER);
+                printer.addText('===============================\n');
+                printer.addText('         RESTAURANT\n');
+                printer.addText('===============================\n');
+                printer.addTextAlign(printer.ALIGN_LEFT);
+                
+                const lines = receiptText.split('\n');
+                lines.forEach(line => {
+                  if (line.trim()) {
+                    printer.addText(line + '\n');
+                  }
+                });
+                
+                printer.addCut(printer.CUT_FEED);
+                
+                printer.send(() => {
+                  console.log('✅ WiFi print successful via ePOS SDK');
+                  device.disconnect();
+                  resolve();
+                });
+              });
+              
+              // Connection timeout
+              setTimeout(() => {
+                device.disconnect();
+                reject(new Error(`Kan geen verbinding maken met printer op ${printerIP}:8008. Controleer het IP-adres en netwerk.`));
+              }, 5000);
+            });
+            return;
+          }
+        } catch (sdkError) {
+          console.error('❌ Epson SDK error:', sdkError);
+          throw new Error(`Epson ePOS SDK fout: ${sdkError instanceof Error ? sdkError.message : 'Onbekende SDK fout'}. Probeer de pagina te herladen.`);
+        }
+      } else {
+        // For mobile platforms, use native HTTP approach
+        console.log('📱 Mobile platform detected, using HTTP approach...');
         const response = await fetch(`http://${printerIP}:8008/`, {
           method: 'GET',
           mode: 'no-cors',
         });
-        console.log('Printer reachable, but printing requires native implementation');
-        throw new Error('Voor mobiele apparaten gebruik de Bluetooth optie of installeer de native app');
-      } else {
-        throw new Error('Epson ePOS SDK niet geladen. Herlaad de pagina of gebruik Bluetooth printing.');
+        console.log('🖨️ Printer reachable via HTTP');
+        throw new Error('Voor mobiele apparaten gebruik de Bluetooth optie of installeer de native app voor volledige WiFi print ondersteuning');
       }
     } catch (error) {
-      console.error('WiFi print error:', error);
+      console.error('❌ WiFi print error:', error);
       throw new Error(`WiFi print mislukt: ${error instanceof Error ? error.message : 'Onbekende fout'}`);
     }
   }, [formatReceiptForWiFi, platform]);

@@ -10,6 +10,7 @@ import { Bluetooth, Wifi, Smartphone, Monitor, Printer } from 'lucide-react';
 import { useUnifiedPrinter } from '@/hooks/useUnifiedPrinter';
 import { useToast } from '@/hooks/use-toast';
 import { EPSONBLEScanner } from './EPSONBLEScanner';
+import { EPSONSDKStatus } from './EPSONSDKStatus';
 import { BleDevice } from '@capacitor-community/bluetooth-le';
 
 
@@ -170,11 +171,16 @@ export function PrinterOptions({ order, isTakeaway = false, discountApplied = fa
 
           {/* WiFi Printing */}
           {supportsWiFi && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <Wifi className="h-4 w-4" />
-                <Label className="font-medium">WiFi Printing</Label>
+                <Label className="font-medium">WiFi Printing (Epson ePOS)</Label>
               </div>
+              
+              {platform === 'web' && (
+                <EPSONSDKStatus />
+              )}
+              
               <div className="space-y-2">
                 <div>
                   <Label htmlFor="printer-ip" className="text-sm">Printer IP-adres</Label>
