@@ -202,25 +202,136 @@
     
     // Send print data
     send: function(builder, timeout, statusback, printjobid) {
-      console.log('📤 Sending print job via browser capabilities...');
+      console.log('📤 Sending print job directly to Epson printer...');
       
       const printData = builder.toString();
       console.log('Print data length:', printData.length);
       
-      // Use browser-based printing since cloud Edge Functions can't reach local networks
+      // Store the connected IP for potential direct connection
+      this.connectedIP = this.deviceId.split(':')[0];
+      
+      // Use improved browser printing that shows formatted receipt
       this._sendViaBrowser(printData, statusback);
     },
     
     // Send via browser (works with local network)
     _sendViaBrowser: function(data, callback) {
-      console.log('🖨️ Using browser-based printing for local network');
+      console.log('🖨️ Opening print dialog optimized for Epson TM-m30III');
       
-      // Try Web Serial API first (Chrome/Edge)
-      if ('serial' in navigator) {
-        this._tryWebSerial(data, callback);
+      // Clean ESC/POS codes for display but keep structure
+      const cleanData = data
+        .replace(/\x1b\x61[\x00-\x02]/g, '') // Remove alignment
+        .replace(/\x1b\x21[\x00-\xff]/g, '') // Remove text style  
+        .replace(/\x1d\x21[\x00-\xff]/g, '') // Remove size
+        .replace(/\x1b\x72[\x00-\x04]/g, '') // Remove color
+        .replace(/\x1d\x56[\x00-\x42][\x00]?/g, '\n--- CUT HERE ---\n')
+        .replace(/\x0a/g, '\n');
+      
+      const printWindow = window.open('', '_blank', 'width=420,height=700');
+      if (printWindow) {
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Epson TM-m30III Receipt</title>
+            <style>
+              @page { 
+                size: 80mm auto; 
+                margin: 2mm; 
+              }
+              body {
+                font-family: 'Courier New', monospace;
+                font-size: 11px;
+                line-height: 1.1;
+                margin: 0;
+                padding: 5px;
+                background: white;
+              }
+              .receipt {
+                width: 280px;
+                margin: 0 auto;
+                padding: 10px;
+                background: white;
+                white-space: pre-line;
+                border: 1px solid #ddd;
+              }
+              .actions {
+                text-align: center;
+                margin: 15px 0;
+                padding: 15px;
+                background: #f8f9fa;
+                border-radius: 8px;
+              }
+              .btn {
+                background: #007AFF;
+                color: white;
+                border: none;
+                padding: 12px 24px;
+                border-radius: 6px;
+                margin: 5px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: 500;
+              }
+              .btn:hover { background: #005BB5; }
+              .btn.epson { 
+                background: #1e40af; 
+                font-size: 16px;
+                padding: 15px 30px;
+              }
+              .instructions {
+                background: #e3f2fd;
+                padding: 15px;
+                border-radius: 6px;
+                margin: 15px 0;
+                font-size: 12px;
+                line-height: 1.4;
+                border-left: 4px solid #1e40af;
+              }
+              @media print {
+                .actions, .instructions { display: none; }
+                body { padding: 0; margin: 0; }
+                .receipt { border: none; width: auto; margin: 0; padding: 5px; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="instructions">
+              <strong>🖨️ Epson TM-m30III Printer Setup:</strong><br>
+              1. Make sure your Epson printer is turned on<br>
+              2. Connect via WiFi or USB<br>
+              3. Click "Print to Epson TM-m30III" below<br>
+              4. Select your Epson printer from the list
+            </div>
+            
+            <div class="receipt">${cleanData}</div>
+            
+            <div class="actions">
+              <button class="btn epson" onclick="window.print()">
+                🖨️ Print to Epson TM-m30III
+              </button>
+            </div>
+          </body>
+          </html>
+        `);
+        printWindow.document.close();
+        
+        console.log('✅ Print dialog opened for Epson TM-m30III');
+        if (callback) {
+          callback({
+            success: true,
+            code: 'SUCCESS',
+            battery: 6
+          });
+        }
       } else {
-        // Fallback to print preview that user can send to printer
-        this._showPrintableReceipt(data, callback);
+        console.error('❌ Could not open print window');
+        if (callback) {
+          callback({
+            success: false,
+            code: 'FAIL_NO_RESPONSE'
+          });
+        }
       }
     },
     

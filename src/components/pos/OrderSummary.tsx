@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Minus, Plus, Trash2, Printer, QrCode } from 'lucide-react';
+import { Minus, Plus, Trash2, Printer } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useEpsonPrinter } from '@/hooks/useEpsonPrinter';
 import { useToast } from '@/hooks/use-toast';
@@ -38,7 +38,6 @@ export function OrderSummary({
     discoveredPrinters,
     connectToPrinter,
     printTicket, 
-    generateOrderQR, 
     discoverPrinters,
     disconnect 
   } = useEpsonPrinter();
@@ -51,13 +50,6 @@ export function OrderSummary({
     }
   };
 
-  const handleGenerateQR = async () => {
-    try {
-      await generateOrderQR(order, isTakeaway, discountApplied);
-    } catch (error) {
-      console.error('QR generation error:', error);
-    }
-  };
 
   const handleConnect = async (ipAddress: string) => {
     try {
@@ -193,23 +185,13 @@ export function OrderSummary({
                   {isConnecting ? 'Connecting...' : '🔌 Connect to TM-m30III (192.168.0.156)'}
                 </Button>
                 
-                <div className="flex gap-2">
-                  <Button 
-                    onClick={discoverPrinters}
-                    variant="outline"
-                    className="flex-1"
-                  >
-                    🔍 Find Printers
-                  </Button>
-                  <Button 
-                    onClick={handleGenerateQR}
-                    disabled={order.items.length === 0}
-                    variant="outline"
-                    className="flex-1"
-                  >
-                    📱 TM Utility QR
-                  </Button>
-                </div>
+                <Button 
+                  onClick={discoverPrinters}
+                  variant="outline"
+                  className="w-full"
+                >
+                  🔍 Find Printers
+                </Button>
                 
                 {discoveredPrinters.length > 0 && (
                   <div className="space-y-1">
@@ -252,30 +234,14 @@ export function OrderSummary({
                   </Button>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-2">
-                  <Button 
-                    onClick={handlePrintTicket}
-                    disabled={order.items.length === 0}
-                    className="flex items-center gap-2"
-                  >
-                    <Printer className="h-4 w-4" />
-                    Print Direct
-                  </Button>
-                  
-                  <Button 
-                    onClick={handleGenerateQR}
-                    disabled={order.items.length === 0}
-                    variant="outline"
-                    className="flex items-center gap-2"
-                  >
-                    <QrCode className="h-4 w-4" />
-                    TM Utility
-                  </Button>
-                </div>
-                
-                <div className="p-2 bg-blue-50 rounded text-xs text-blue-700">
-                  💡 <strong>Tip:</strong> If direct print doesn't work, use TM Utility QR code - it always works with Epson thermal printers!
-                </div>
+                <Button 
+                  onClick={handlePrintTicket}
+                  disabled={order.items.length === 0}
+                  className="w-full flex items-center gap-2"
+                >
+                  <Printer className="h-4 w-4" />
+                  Print Receipt
+                </Button>
               </div>
             )}
           </div>
