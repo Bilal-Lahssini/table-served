@@ -152,153 +152,90 @@ export function useEpsonPrinter(): EpsonPrinterHook {
     }
 
     try {
-      console.log('🖨️ Preparing receipt for:', `${printerConfig.ipAddress}:${printerConfig.port}`);
+      console.log('🖨️ Preparing receipt for printing...');
       
       const receiptData = formatReceipt(order, isTakeaway, discountApplied);
       
-      // Web browsers cannot directly connect to printer TCP sockets
-      // Provide alternative printing methods
+      // For web browsers, use system print dialog which can access USB printers
+      const printContent = receiptData
+        .replace(/\x1B\x61\x01/g, '') // Remove center alignment ESC codes
+        .replace(/\x1B\x61\x00/g, '') // Remove left alignment ESC codes
+        .replace(/\x1B\x45\x01/g, '') // Remove bold on ESC codes
+        .replace(/\x1B\x45\x00/g, '') // Remove bold off ESC codes
+        .replace(/\x1B\[[0-9;]*[mGKH]/g, ''); // Remove any other ESC codes
       
-      toast({
-        title: "Web Browser Beperkingen",
-        description: "Directe printer verbinding niet mogelijk. Alternatieve opties worden getoond.",
-        duration: 5000,
-      });
+      // Create a hidden iframe for printing
+      const printFrame = document.createElement('iframe');
+      printFrame.style.position = 'absolute';
+      printFrame.style.top = '-10000px';
+      printFrame.style.left = '-10000px';
+      printFrame.style.width = '1px';
+      printFrame.style.height = '1px';
+      document.body.appendChild(printFrame);
       
-      // Create a printable receipt window
-      const printWindow = window.open('', '_blank', 'width=400,height=600');
-      if (printWindow) {
-        const cleanReceiptData = receiptData
-          .replace(/\x1B\x61\x01/g, '') // Remove center alignment
-          .replace(/\x1B\x61\x00/g, '') // Remove left alignment  
-          .replace(/\x1B\x45\x01/g, '') // Remove bold on
-          .replace(/\x1B\x45\x00/g, '') // Remove bold off
-          .replace(/\x1B\[[0-9;]*[mGKH]/g, ''); // Remove any other escape sequences
-          
-        printWindow.document.write(`
+      const printDoc = printFrame.contentDocument || printFrame.contentWindow?.document;
+      if (printDoc) {
+        printDoc.open();
+        printDoc.write(`
           <!DOCTYPE html>
           <html>
             <head>
               <meta charset="UTF-8">
-              <title>Receipt - ${order.id.substring(0, 8)}</title>
+              <title>Receipt</title>
               <style>
-                body { 
-                  font-family: 'Courier New', monospace; 
-                  font-size: 12px; 
-                  margin: 20px; 
-                  line-height: 1.2;
+                @page {
+                  size: 80mm auto;
+                  margin: 0;
                 }
-                .receipt { 
-                  max-width: 300px; 
-                  margin: 0 auto; 
-                  border: 1px solid #ccc;
-                  padding: 10px;
-                  background: white;
+                body {
+                  font-family: 'Courier New', monospace;
+                  font-size: 12px;
+                  line-height: 1.1;
+                  margin: 0;
+                  padding: 5mm;
+                  white-space: pre-wrap;
+                  word-wrap: break-word;
                 }
-                .center { text-align: center; }
-                .bold { font-weight: bold; }
-                .actions {
-                  margin: 20px 0;
+                .center {
                   text-align: center;
                 }
-                .btn {
-                  background: #007bff;
-                  color: white;
-                  border: none;
-                  padding: 12px 20px;
-                  margin: 5px;
-                  border-radius: 4px;
-                  cursor: pointer;
-                  font-size: 14px;
-                }
-                .btn:hover {
-                  background: #0056b3;
-                }
-                .info {
-                  background: #f8f9fa;
-                  border: 1px solid #dee2e6;
-                  border-radius: 4px;
-                  padding: 10px;
-                  margin: 10px 0;
-                  font-size: 11px;
-                }
-                @media print {
-                  .actions, .info { display: none; }
-                  .receipt { border: none; box-shadow: none; }
+                .bold {
+                  font-weight: bold;
                 }
               </style>
             </head>
-            <body>
-              <div class="receipt">
-                <pre>${cleanReceiptData}</pre>
-              </div>
-              
-              <div class="actions">
-                <button class="btn" onclick="window.print()">
-                  🖨️ Print via Browser
-                </button>
-                <button class="btn" onclick="copyToClipboard()">
-                  📋 Copy Receipt
-                </button>
-                <button class="btn" onclick="openPrinterInterface()">
-                  🌐 Printer Web Interface
-                </button>
-              </div>
-              
-              <div class="info">
-                <strong>Print Opties:</strong><br>
-                • <strong>Print via Browser:</strong> Gebruik je browser's print functie<br>
-                • <strong>Copy Receipt:</strong> Kopieer naar klembord voor printer app<br>
-                • <strong>Printer Web Interface:</strong> Open printer's web interface (als beschikbaar)<br><br>
-                <strong>Printer IP:</strong> ${printerConfig.ipAddress}:${printerConfig.port}
-              </div>
-              
-              <script>
-                function copyToClipboard() {
-                  const text = \`${cleanReceiptData}\`;
-                  navigator.clipboard.writeText(text).then(() => {
-                    alert('Receipt gekopieerd naar klembord!');
-                  }).catch(() => {
-                    // Fallback for older browsers
-                    const textArea = document.createElement('textarea');
-                    textArea.value = text;
-                    document.body.appendChild(textArea);
-                    textArea.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(textArea);
-                    alert('Receipt gekopieerd naar klembord!');
-                  });
-                }
-                
-                function openPrinterInterface() {
-                  const printerUrl = 'http://${printerConfig.ipAddress}';
-                  window.open(printerUrl, '_blank');
-                }
-              </script>
-            </body>
+            <body>${printContent}</body>
           </html>
         `);
-        printWindow.document.close();
+        printDoc.close();
         
-        // Focus the new window
-        printWindow.focus();
-        
-        toast({
-          title: "Receipt Gereed",
-          description: "Receipt geopend in nieuw venster. Kies je print methode.",
-          duration: 3000,
-        });
+        // Wait for content to load, then print
+        setTimeout(() => {
+          printFrame.contentWindow?.focus();
+          printFrame.contentWindow?.print();
+          
+          // Clean up after printing
+          setTimeout(() => {
+            document.body.removeChild(printFrame);
+          }, 1000);
+          
+          toast({
+            title: "Print Dialoog Geopend",
+            description: "Selecteer je USB printer in het print dialoog.",
+            duration: 4000,
+          });
+        }, 100);
       }
-
+      
     } catch (error) {
       console.error('❌ Print preparation error:', error);
       toast({
         title: "Print Fout",
-        description: "Kon receipt niet voorbereiden.",
+        description: "Kon print dialoog niet openen.",
         variant: "destructive",
       });
     }
-  }, [printerConfig, formatReceipt, toast, isSDKReady]);
+  }, [formatReceipt, toast, isSDKReady]);
 
   return {
     isConnected,
