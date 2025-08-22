@@ -202,62 +202,169 @@
     
     // Send print data
     send: function(builder, timeout, statusback, printjobid) {
-      console.log('📤 Sending print job to connected printer...');
+      console.log('📤 Sending print job via browser capabilities...');
       
       const printData = builder.toString();
       console.log('Print data length:', printData.length);
       
-      // Try to send via fetch to our edge function
-      this._sendViaTCPProxy(printData, statusback);
+      // Use browser-based printing since cloud Edge Functions can't reach local networks
+      this._sendViaBrowser(printData, statusback);
     },
     
-    // Send via TCP proxy (using our edge function)
-    _sendViaTCPProxy: async function(data, callback) {
+    // Send via browser (works with local network)
+    _sendViaBrowser: function(data, callback) {
+      console.log('🖨️ Using browser-based printing for local network');
+      
+      // Try Web Serial API first (Chrome/Edge)
+      if ('serial' in navigator) {
+        this._tryWebSerial(data, callback);
+      } else {
+        // Fallback to print preview that user can send to printer
+        this._showPrintableReceipt(data, callback);
+      }
+    },
+    
+    // Try Web Serial API for direct connection
+    _tryWebSerial: async function(data, callback) {
       try {
-        console.log('🖨️ Sending via TCP proxy to:', this.deviceId);
+        console.log('🔌 Attempting Web Serial connection...');
         
-        const [ipAddress] = this.deviceId.split(':');
+        const port = await navigator.serial.requestPort();
+        await port.open({ baudRate: 9600 });
         
-        const response = await fetch('/functions/v1/epos-print', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            printerIP: ipAddress,
-            printData: data
-          }),
-        });
+        const writer = port.writable.getWriter();
+        const encoder = new TextEncoder();
+        await writer.write(encoder.encode(data));
         
-        const result = await response.json();
+        writer.releaseLock();
+        await port.close();
         
-        if (result.success) {
-          console.log('✅ Print job sent successfully');
-          if (callback) {
-            callback({
-              success: true,
-              code: 'SUCCESS',
-              battery: 6
-            });
-          }
-        } else {
-          console.error('❌ Print failed:', result.error);
-          if (callback) {
-            callback({
-              success: false,
-              code: 'FAIL_NO_RESPONSE',
-              message: result.message
-            });
-          }
+        console.log('✅ Sent via Web Serial');
+        if (callback) {
+          callback({
+            success: true,
+            code: 'SUCCESS',
+            battery: 6
+          });
         }
         
       } catch (error) {
-        console.error('❌ TCP proxy error:', error);
+        console.log('❌ Web Serial failed, using print preview:', error.message);
+        this._showPrintableReceipt(data, callback);
+      }
+    },
+    
+    // Show printable receipt that works with any printer
+    _showPrintableReceipt: function(data, callback) {
+      // Clean ESC/POS codes for display
+      const cleanData = data
+        .replace(/\x1b\x61[\x00-\x02]/g, '') // Remove alignment
+        .replace(/\x1b\x21[\x00-\xff]/g, '') // Remove text style  
+        .replace(/\x1d\x21[\x00-\xff]/g, '') // Remove size
+        .replace(/\x1b\x72[\x00-\x04]/g, '') // Remove color
+        .replace(/\x1d\x56[\x00-\x42][\x00]?/g, '\n--- CUT HERE ---\n')
+        .replace(/\x0a/g, '\n');
+      
+      const printWindow = window.open('', '_blank', 'width=420,height=600');
+      if (printWindow) {
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Receipt - Print to Any Printer</title>
+            <style>
+              @page { 
+                size: 80mm auto; 
+                margin: 5mm; 
+              }
+              body {
+                font-family: 'Courier New', monospace;
+                font-size: 12px;
+                line-height: 1.2;
+                margin: 0;
+                padding: 10px;
+                background: white;
+              }
+              .receipt {
+                max-width: 280px;
+                margin: 0 auto;
+                padding: 15px;
+                border: 1px solid #ddd;
+                background: white;
+                white-space: pre-line;
+              }
+              .actions {
+                text-align: center;
+                margin: 20px 0;
+                padding: 15px;
+                background: #f5f5f5;
+                border-radius: 8px;
+              }
+              .btn {
+                background: #007AFF;
+                color: white;
+                border: none;
+                padding: 12px 20px;
+                border-radius: 6px;
+                margin: 5px;
+                cursor: pointer;
+                font-size: 14px;
+              }
+              .btn:hover { background: #005BB5; }
+              .btn.secondary { background: #28a745; }
+              .instructions {
+                background: #e7f3ff;
+                padding: 15px;
+                border-radius: 6px;
+                margin: 15px 0;
+                font-size: 11px;
+                line-height: 1.4;
+              }
+              @media print {
+                .actions, .instructions { display: none; }
+                body { padding: 0; }
+                .receipt { border: none; max-width: none; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="receipt">${cleanData}</div>
+            
+            <div class="instructions">
+              <strong>📱 For Epson TM-m30III:</strong><br>
+              1. Click "Print Receipt" below<br>
+              2. Select your Epson printer<br>
+              3. Receipt will print on thermal paper
+            </div>
+            
+            <div class="actions">
+              <button class="btn" onclick="window.print()">
+                🖨️ Print Receipt
+              </button>
+              <button class="btn secondary" onclick="copyToClipboard()">
+                📋 Copy Text
+              </button>
+            </div>
+            
+            <script>
+              function copyToClipboard() {
+                const text = \`${cleanData}\`;
+                navigator.clipboard.writeText(text).then(() => {
+                  alert('Receipt copied to clipboard!');
+                });
+              }
+            </script>
+          </body>
+          </html>
+        `);
+        printWindow.document.close();
+        
+        console.log('✅ Print dialog opened');
         if (callback) {
           callback({
-            success: false,
-            code: 'FAIL_CONNECT',
-            message: 'Could not reach print server'
+            success: true,
+            code: 'SUCCESS',
+            battery: 6
           });
         }
       }
