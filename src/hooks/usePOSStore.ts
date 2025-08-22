@@ -17,7 +17,7 @@ export function usePOSStore() {
     setDeliveryAddress('');
   }, []);
 
-  const addItemToOrder = useCallback((menuItem: MenuItem) => {
+  const addItemToOrder = useCallback((menuItem: MenuItem, pastaType?: 'Spaghetti' | 'Tagliatelle' | 'Penne') => {
     if (!selectedTable) return;
 
     const orderId = currentOrder?.id || `order-${Date.now()}`;
@@ -32,8 +32,10 @@ export function usePOSStore() {
         total: 0
       };
 
+      // For pasta items, check if same item with same pasta type exists
       const existingItemIndex = existingOrder.items.findIndex(
-        item => item.menuItem.id === menuItem.id
+        item => item.menuItem.id === menuItem.id && 
+        (menuItem.category !== 'pasta' || item.pastaType === pastaType)
       );
 
       let updatedItems: OrderItem[];
@@ -45,7 +47,11 @@ export function usePOSStore() {
             : item
         );
       } else {
-        updatedItems = [...existingOrder.items, { menuItem, quantity: 1 }];
+        const newItem: OrderItem = { menuItem, quantity: 1 };
+        if (pastaType && menuItem.category === 'pasta') {
+          newItem.pastaType = pastaType;
+        }
+        updatedItems = [...existingOrder.items, newItem];
       }
 
       const total = updatedItems.reduce((sum, item) => 
@@ -59,9 +65,13 @@ export function usePOSStore() {
       };
 
       // Show toast notification
+      const displayName = pastaType && menuItem.category === 'pasta' 
+        ? `${menuItem.name} (${pastaType})`
+        : menuItem.name;
+      
       toast({
         title: "Toegevoegd",
-        description: `${menuItem.name} is toegevoegd aan de bestelling`,
+        description: `${displayName} is toegevoegd aan de bestelling`,
       });
 
       return newOrder;

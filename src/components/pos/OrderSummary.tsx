@@ -85,7 +85,10 @@ export function OrderSummary({
     receipt += 'BESTELLING:\n';
     order.items.forEach((item) => {
       const itemTotal = item.menuItem.price * item.quantity;
-      receipt += `${item.quantity}x ${item.menuItem.name}\n`;
+      const itemName = item.pastaType && item.menuItem.category === 'pasta' 
+        ? `${item.menuItem.name} (${item.pastaType})`
+        : item.menuItem.name;
+      receipt += `${item.quantity}x ${itemName}\n`;
       receipt += `€${item.menuItem.price.toFixed(2)} x ${item.quantity} = €${itemTotal.toFixed(2)}\n`;
       receipt += '\n';
     });
@@ -186,7 +189,12 @@ export function OrderSummary({
           {order.items.map((orderItem) => (
             <div key={orderItem.menuItem.id} className="flex items-center justify-between p-3 border rounded-lg">
               <div className="flex-1">
-                <h4 className="font-medium">{orderItem.menuItem.name}</h4>
+                <h4 className="font-medium">
+                  {orderItem.menuItem.name}
+                  {orderItem.pastaType && (
+                    <span className="text-sm text-muted-foreground ml-2">({orderItem.pastaType})</span>
+                  )}
+                </h4>
                 <p className="text-sm text-muted-foreground">
                   €{orderItem.menuItem.price.toFixed(2)} per stuk
                 </p>

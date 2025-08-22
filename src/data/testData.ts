@@ -1245,6 +1245,15 @@ export const menuItems: MenuItem[] = [
 },
 
 {
+  id: 'desserts-3',
+  name: 'Looksaus',
+  description: '',
+  price: 1.0,
+  category: 'desserts',
+  subcategory: ''
+},
+
+{
   id: 'drinks-41',
   name: 'Bianco (Witte Wijn)',
   description: '',

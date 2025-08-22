@@ -12,6 +12,7 @@ export interface OrderItem {
   menuItem: MenuItem;
   quantity: number;
   notes?: string;
+  pastaType?: 'Spaghetti' | 'Tagliatelle' | 'Penne';
 }
 
 export interface Order {

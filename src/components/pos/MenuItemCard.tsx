@@ -1,14 +1,31 @@
 import { MenuItem } from '@/types/pos';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus } from 'lucide-react';
+import { useState } from 'react';
 
 interface MenuItemCardProps {
   item: MenuItem;
-  onAddToOrder: (item: MenuItem) => void;
+  onAddToOrder: (item: MenuItem, pastaType?: 'Spaghetti' | 'Tagliatelle' | 'Penne') => void;
 }
 
 export function MenuItemCard({ item, onAddToOrder }: MenuItemCardProps) {
+  const [selectedPastaType, setSelectedPastaType] = useState<'Spaghetti' | 'Tagliatelle' | 'Penne'>('Spaghetti');
+  const isPasta = item.category === 'pasta';
+
+  const handleAddToOrder = () => {
+    if (isPasta) {
+      onAddToOrder(item, selectedPastaType);
+    } else {
+      onAddToOrder(item);
+    }
+  };
+
+  const handlePastaTypeChange = (value: string) => {
+    setSelectedPastaType(value as 'Spaghetti' | 'Tagliatelle' | 'Penne');
+  };
+
   return (
     <Card className="h-full hover:shadow-md transition-shadow">
       <CardContent className="p-4">
@@ -23,8 +40,25 @@ export function MenuItemCard({ item, onAddToOrder }: MenuItemCardProps) {
             </div>
           </div>
         </div>
+        
+        {isPasta && (
+          <div className="mb-3">
+            <label className="text-sm font-medium mb-2 block">Pasta Type:</label>
+            <Select value={selectedPastaType} onValueChange={handlePastaTypeChange}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Spaghetti">Spaghetti</SelectItem>
+                <SelectItem value="Tagliatelle">Tagliatelle</SelectItem>
+                <SelectItem value="Penne">Penne</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        
         <Button 
-          onClick={() => onAddToOrder(item)}
+          onClick={handleAddToOrder}
           className="w-full"
           size="sm"
         >
