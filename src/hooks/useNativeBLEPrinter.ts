@@ -6,8 +6,10 @@ import { BleClient, BleDevice } from '@capacitor-community/bluetooth-le';
 interface NativeBLEPrinterHook {
   isConnected: boolean;
   isConnecting: boolean;
-  connectAndPrint: (order: Order, isTakeaway: boolean, discountApplied: boolean) => Promise<void>;
+  connectAndPrint: (order: Order, isTakeaway: boolean, discountApplied: boolean, selectedDevice?: BleDevice) => Promise<void>;
+  connectToPrinter: (selectedDevice?: BleDevice) => Promise<void>;
   disconnect: () => Promise<void>;
+  connectedDevice: BleDevice | null;
 }
 
 export function useNativeBLEPrinter(): NativeBLEPrinterHook {
@@ -34,20 +36,34 @@ export function useNativeBLEPrinter(): NativeBLEPrinterHook {
     doubleFeed: '\n\n'
   };
 
-  const connectToPrinter = useCallback(async (): Promise<void> => {
+  const connectToPrinter = useCallback(async (selectedDevice?: BleDevice): Promise<void> => {
     try {
       setIsConnecting(true);
       
       // Initialize BLE
       await BleClient.initialize();
       
-      // Request device scan
-      const device = await BleClient.requestDevice({
-        services: ['000018f0-0000-1000-8000-00805f9b34fb'], // Epson service UUID
-        namePrefix: 'TM-',
-        optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb'],
-      });
+      let device: BleDevice;
+      
+      if (selectedDevice) {
+        // Use pre-selected device
+        device = selectedDevice;
+      } else {
+        // Request device scan with improved EPSON filtering
+        device = await BleClient.requestDevice({
+          namePrefix: 'EPSON',
+          optionalServices: [
+            '000018f0-0000-1000-8000-00805f9b34fb', // Epson thermal printer service
+            '0000ff00-0000-1000-8000-00805f9b34fb', // Generic service  
+            '49535343-fe7d-4ae5-8fa9-9fafd205e455', // HM-10 BLE module
+            '6e400001-b5a3-f393-e0a9-e50e24dcca9e', // Nordic UART service
+            '000018f0-0000-1000-8000-00805f9b34fb'  // Epson service
+          ],
+        });
+      }
 
+      console.log('Connecting to EPSON printer:', device.name, device.deviceId);
+      
       // Connect to device
       await BleClient.connect(device.deviceId);
       
@@ -55,15 +71,15 @@ export function useNativeBLEPrinter(): NativeBLEPrinterHook {
       setIsConnected(true);
       
       toast({
-        title: "Printer verbonden",
-        description: `Verbonden met ${device.name || 'BLE printer'}`,
+        title: "EPSON Printer verbonden",
+        description: `Verbonden met ${device.name || 'EPSON BLE printer'}`,
       });
       
     } catch (error) {
       console.error('BLE connection error:', error);
       toast({
         title: "Verbinding mislukt",
-        description: "Kon niet verbinden met de BLE printer. Controleer of Bluetooth is ingeschakeld.",
+        description: "Kon niet verbinden met de EPSON printer. Controleer of Bluetooth is ingeschakeld en de printer in pairing mode staat.",
         variant: "destructive"
       });
       throw error;
@@ -179,10 +195,10 @@ export function useNativeBLEPrinter(): NativeBLEPrinterHook {
     }
   }, [device]);
 
-  const connectAndPrint = useCallback(async (order: Order, isTakeaway: boolean, discountApplied: boolean): Promise<void> => {
+  const connectAndPrint = useCallback(async (order: Order, isTakeaway: boolean, discountApplied: boolean, selectedDevice?: BleDevice): Promise<void> => {
     try {
       if (!isConnected) {
-        await connectToPrinter();
+        await connectToPrinter(selectedDevice);
       }
       
       const receiptData = formatReceipt(order, isTakeaway, discountApplied);
@@ -215,6 +231,8 @@ export function useNativeBLEPrinter(): NativeBLEPrinterHook {
     isConnected,
     isConnecting,
     connectAndPrint,
-    disconnect
+    connectToPrinter,
+    disconnect,
+    connectedDevice: device
   };
 }

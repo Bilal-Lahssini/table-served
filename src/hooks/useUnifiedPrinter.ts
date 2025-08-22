@@ -3,11 +3,12 @@ import { Order } from '@/types/pos';
 import { useWebBluetoothPrinter } from './useWebBluetoothPrinter';
 import { useNativeBLEPrinter } from './useNativeBLEPrinter';
 import { Capacitor } from '@capacitor/core';
+import { BleDevice } from '@capacitor-community/bluetooth-le';
 
 interface UnifiedPrinterHook {
   isConnected: boolean;
   isConnecting: boolean;
-  connectAndPrint: (order: Order, isTakeaway: boolean, discountApplied: boolean) => Promise<void>;
+  connectAndPrint: (order: Order, isTakeaway: boolean, discountApplied: boolean, selectedDevice?: BleDevice) => Promise<void>;
   disconnect: () => Promise<void>;
   printViaWiFi: (order: Order, isTakeaway: boolean, discountApplied: boolean, printerIP: string) => Promise<void>;
   platform: 'web' | 'ios' | 'android';
@@ -123,11 +124,11 @@ export function useUnifiedPrinter(): UnifiedPrinterHook {
     }
   }, [formatReceiptForWiFi, platform]);
 
-  const connectAndPrint = useCallback(async (order: Order, isTakeaway: boolean, discountApplied: boolean) => {
+  const connectAndPrint = useCallback(async (order: Order, isTakeaway: boolean, discountApplied: boolean, selectedDevice?: BleDevice) => {
     if (platform === 'web' && supportsBluetooth) {
       return webBluetooth.connectAndPrint(order, isTakeaway, discountApplied);
     } else if (platform !== 'web') {
-      return nativeBLE.connectAndPrint(order, isTakeaway, discountApplied);
+      return nativeBLE.connectAndPrint(order, isTakeaway, discountApplied, selectedDevice);
     } else {
       throw new Error('Bluetooth not supported on this platform');
     }

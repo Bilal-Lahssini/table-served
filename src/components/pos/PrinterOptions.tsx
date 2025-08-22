@@ -9,6 +9,8 @@ import { Separator } from '@/components/ui/separator';
 import { Bluetooth, Wifi, Smartphone, Monitor, Printer } from 'lucide-react';
 import { useUnifiedPrinter } from '@/hooks/useUnifiedPrinter';
 import { useToast } from '@/hooks/use-toast';
+import { EPSONBLEScanner } from './EPSONBLEScanner';
+import { BleDevice } from '@capacitor-community/bluetooth-le';
 
 
 interface PrinterOptionsProps {
@@ -20,6 +22,8 @@ interface PrinterOptionsProps {
 export function PrinterOptions({ order, isTakeaway = false, discountApplied = false }: PrinterOptionsProps) {
   const [printerIP, setPrinterIP] = useState('192.168.1.100');
   const [isWiFiPrinting, setIsWiFiPrinting] = useState(false);
+  const [selectedBLEDevice, setSelectedBLEDevice] = useState<BleDevice | null>(null);
+  const [showScanner, setShowScanner] = useState(false);
   const { toast } = useToast();
   
   const {
@@ -34,15 +38,15 @@ export function PrinterOptions({ order, isTakeaway = false, discountApplied = fa
 
   const handleBluetoothPrint = async () => {
     try {
-      await connectAndPrint(order, isTakeaway, discountApplied);
+      await connectAndPrint(order, isTakeaway, discountApplied, selectedBLEDevice);
       toast({
         title: "Print succesvol",
-        description: "Bestelling is afgedrukt via Bluetooth",
+        description: "Bestelling is afgedrukt via EPSON Bluetooth printer",
       });
     } catch (error) {
       toast({
         title: "Print fout",
-        description: `Bluetooth print mislukt: ${error}`,
+        description: `EPSON Bluetooth print mislukt: ${error}`,
         variant: "destructive",
       });
     }
@@ -116,19 +120,48 @@ export function PrinterOptions({ order, isTakeaway = false, discountApplied = fa
         <CardContent className="space-y-4">
           {/* Bluetooth Printing */}
           {supportsBluetooth && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Bluetooth className="h-4 w-4" />
-                <Label className="font-medium">Bluetooth Printing</Label>
-                {isConnected && <Badge variant="default" className="text-xs">Verbonden</Badge>}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Bluetooth className="h-4 w-4" />
+                  <Label className="font-medium">EPSON Bluetooth Printing</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  {isConnected && <Badge variant="default" className="text-xs">Verbonden</Badge>}
+                  {selectedBLEDevice && (
+                    <Badge variant="outline" className="text-xs">
+                      {selectedBLEDevice.name || 'EPSON Printer'}
+                    </Badge>
+                  )}
+                </div>
               </div>
+              
+              {platform !== 'web' && (
+                <div className="space-y-2">
+                  <Button
+                    onClick={() => setShowScanner(!showScanner)}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    {showScanner ? 'Verberg Scanner' : 'Toon EPSON Scanner'}
+                  </Button>
+                  
+                  {showScanner && (
+                    <EPSONBLEScanner 
+                      onPrinterSelected={setSelectedBLEDevice}
+                      selectedDevice={selectedBLEDevice}
+                    />
+                  )}
+                </div>
+              )}
+              
               <Button 
                 onClick={handleBluetoothPrint}
                 disabled={order.items.length === 0 || isConnecting}
                 className="w-full flex items-center gap-2"
               >
                 <Bluetooth className="h-4 w-4" />
-                {isConnecting ? 'Verbinding maken...' : isConnected ? 'Print via Bluetooth' : 'Verbind & Print'}
+                {isConnecting ? 'Verbinding maken...' : isConnected ? 'Print via EPSON Bluetooth' : 'Verbind & Print EPSON'}
               </Button>
             </div>
           )}
