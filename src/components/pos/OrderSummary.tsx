@@ -4,7 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Minus, Plus, Trash2, Printer } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { usePrinterService } from '@/hooks/usePrinterService';
+import { useEpsonPrinter } from '@/hooks/useEpsonPrinter';
+import { PrinterSetup } from './PrinterSetup';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface OrderSummaryProps {
   order: Order | null;
@@ -31,10 +33,10 @@ export function OrderSummary({
     printOrder, 
     isConnecting, 
     isConnected, 
-    isDiscovering, 
-    connectedPrinter,
-    discoverPrinters
-  } = usePrinterService();
+    isPrinting,
+    isConfigured,
+    printerIP
+  } = useEpsonPrinter();
 
   const handlePrintTicket = async () => {
     if (!order) return;
@@ -43,12 +45,6 @@ export function OrderSummary({
       await printOrder(order, isTakeaway, discountApplied);
     } catch (error) {
       console.error('Print failed:', error);
-      // Try to rediscover printers
-      try {
-        await discoverPrinters();
-      } catch (discoveryError) {
-        console.error('Rediscovery failed:', discoveryError);
-      }
     }
   };
 
@@ -75,10 +71,11 @@ export function OrderSummary({
   const total = subtotal - discountAmount;
 
   const getPrintButtonText = () => {
-    if (isDiscovering) return 'EpsonAC5565 zoeken...';
+    if (isPrinting) return 'Aan het printen...';
     if (isConnecting) return 'Verbinden...';
-    if (isConnected && connectedPrinter) return `Print via ${connectedPrinter.name}`;
-    return 'Zoek EpsonAC5565';
+    if (isConnected && printerIP) return `Print via ${printerIP}`;
+    if (isConfigured) return 'Print Ticket';
+    return 'Printer Instellen';
   };
 
   return (
@@ -169,15 +166,35 @@ export function OrderSummary({
         )}
 
         <div className="space-y-3 mt-6">
-          <Button 
-            onClick={handlePrintTicket}
-            variant="outline"
-            className="w-full flex items-center gap-2"
-            disabled={order.items.length === 0 || isConnecting || isDiscovering}
-          >
-            <Printer className="h-4 w-4" />
-            {getPrintButtonText()}
-          </Button>
+          {isConfigured ? (
+            <Button 
+              onClick={handlePrintTicket}
+              variant="outline"
+              className="w-full flex items-center gap-2"
+              disabled={order.items.length === 0 || isConnecting || isPrinting}
+            >
+              <Printer className="h-4 w-4" />
+              {getPrintButtonText()}
+            </Button>
+          ) : (
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button 
+                  variant="outline"
+                  className="w-full flex items-center gap-2"
+                >
+                  <Printer className="h-4 w-4" />
+                  {getPrintButtonText()}
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Printer Configuratie</DialogTitle>
+                </DialogHeader>
+                <PrinterSetup />
+              </DialogContent>
+            </Dialog>
+          )}
           
           <div className="flex gap-2">
             <Button 
