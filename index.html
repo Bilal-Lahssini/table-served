@@ -4,26 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pepe's Pizza </title>
-    <script>
-      // Debug SDK loading
-      window.addEventListener('load', function() {
-        console.log('Window loaded, checking Epson SDK...');
-        console.log('window.epson exists:', !!window.epson);
-        console.log('window.epson.ePOSPrint exists:', !!(window.epson && window.epson.ePOSPrint));
-        
-        if (window.epson && window.epson.ePOSPrint) {
-          console.log('✅ Epson SDK loaded successfully');
-          console.log('ePOSPrint methods:', Object.getOwnPropertyNames(window.epson.ePOSPrint));
-        } else {
-          console.error('❌ Epson SDK failed to load');
-        }
-      });
-    </script>
   </head>
 
   <body>
     <div id="root"></div>
-    <script src="https://cdn.epson-biz.com/modules/pos/epos-print-5.0.0.js" onload="console.log('Epson SDK loaded successfully')" onerror="console.error('Failed to load Epson SDK')"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

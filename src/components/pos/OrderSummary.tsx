@@ -4,10 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Minus, Plus, Trash2, Printer } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { useEpsonPrinter } from '@/hooks/useEpsonPrinter';
-import { useMobilePrinter } from '@/hooks/useMobilePrinter';
-import { PrinterSetup } from './PrinterSetup';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useWebBluetoothPrinter } from '@/hooks/useWebBluetoothPrinter';
 
 interface OrderSummaryProps {
   order: Order | null;
@@ -30,18 +27,17 @@ export function OrderSummary({
   discountApplied = false,
   onToggleDiscount
 }: OrderSummaryProps) {
-  const { isConnected, isPrinting, isConnecting, isConfigured, printerIP, isMobile, printOrder } = useMobilePrinter();
+  const { connectAndPrint, isConnecting, isConnected } = useWebBluetoothPrinter();
 
   const handlePrintTicket = async () => {
     if (!order) return;
     
     try {
-      await printOrder(order, isTakeaway, discountApplied);
+      await connectAndPrint(order, isTakeaway, discountApplied);
     } catch (error) {
       console.error('Print failed:', error);
     }
   };
-
   if (!order) {
     return (
       <Card className="h-full">
@@ -63,14 +59,6 @@ export function OrderSummary({
   
   const discountAmount = isTakeaway && discountApplied ? subtotal * 0.15 : 0;
   const total = subtotal - discountAmount;
-
-  const getPrintButtonText = () => {
-    if (isPrinting) return 'Aan het printen...';
-    if (isConnecting) return 'Verbinden...';
-    if (isConnected && printerIP) return `Print via ${printerIP}`;
-    if (isConfigured) return 'Print Ticket';
-    return 'Printer Instellen';
-  };
 
   return (
     <Card className="h-full flex flex-col">
@@ -160,35 +148,15 @@ export function OrderSummary({
         )}
 
         <div className="space-y-3 mt-6">
-          {isConfigured ? (
-            <Button 
-              onClick={handlePrintTicket}
-              variant="outline"
-              className="w-full flex items-center gap-2"
-              disabled={order.items.length === 0 || isConnecting || isPrinting}
-            >
-              <Printer className="h-4 w-4" />
-              {getPrintButtonText()}
-            </Button>
-          ) : (
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button 
-                  variant="outline"
-                  className="w-full flex items-center gap-2"
-                >
-                  <Printer className="h-4 w-4" />
-                  {getPrintButtonText()}
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Printer Configuratie</DialogTitle>
-                </DialogHeader>
-                <PrinterSetup />
-              </DialogContent>
-            </Dialog>
-          )}
+          <Button 
+            onClick={handlePrintTicket}
+            variant="outline"
+            className="w-full flex items-center gap-2"
+            disabled={order.items.length === 0 || isConnecting}
+          >
+            <Printer className="h-4 w-4" />
+            {isConnecting ? 'Verbinding maken...' : isConnected ? 'Print Ticket' : 'Verbind & Print Ticket'}
+          </Button>
           
           <div className="flex gap-2">
             <Button 
