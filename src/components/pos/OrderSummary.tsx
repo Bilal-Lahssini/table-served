@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Minus, Plus, Trash2, Printer } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useEpsonPrinter } from '@/hooks/useEpsonPrinter';
+import { useMobilePrinter } from '@/hooks/useMobilePrinter';
 import { PrinterSetup } from './PrinterSetup';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
@@ -29,14 +30,7 @@ export function OrderSummary({
   discountApplied = false,
   onToggleDiscount
 }: OrderSummaryProps) {
-  const { 
-    printOrder, 
-    isConnecting, 
-    isConnected, 
-    isPrinting,
-    isConfigured,
-    printerIP
-  } = useEpsonPrinter();
+  const { isConnected, isPrinting, isConnecting, isConfigured, printerIP, isMobile, printOrder } = useMobilePrinter();
 
   const handlePrintTicket = async () => {
     if (!order) return;

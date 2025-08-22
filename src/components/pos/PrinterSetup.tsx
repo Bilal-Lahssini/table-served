@@ -6,7 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Settings, Wifi } from 'lucide-react';
 import { useEpsonPrinter } from '@/hooks/useEpsonPrinter';
+import { useMobilePrinter } from '@/hooks/useMobilePrinter';
 import { PrinterNetworkScanner } from './PrinterNetworkScanner';
+import { MobilePrinterStatus } from './MobilePrinterStatus';
 
 interface PrinterSetupProps {
   onSetupComplete?: () => void;
@@ -21,10 +23,11 @@ export function PrinterSetup({ onSetupComplete }: PrinterSetupProps) {
     isConnecting,
     isConfigured,
     printerIP,
+    isMobile,
     setPrinterIP,
     testConnection,
     clearConfiguration
-  } = useEpsonPrinter();
+  } = useMobilePrinter();
 
   const handleSetup = async () => {
     if (!ipAddress.trim()) {
@@ -68,13 +71,16 @@ export function PrinterSetup({ onSetupComplete }: PrinterSetupProps) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Settings className="h-5 w-5" />
-          Epson TM-m30III (AC5565) Setup
-        </CardTitle>
-      </CardHeader>
+    <div className="space-y-4">
+      <MobilePrinterStatus />
+      
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="h-5 w-5" />
+            Epson TM-m30III Setup {isMobile ? '(Mobile)' : '(Web)'}
+          </CardTitle>
+        </CardHeader>
       <CardContent className="space-y-4">
         {isConfigured ? (
           <div className="space-y-4">
@@ -168,8 +174,10 @@ export function PrinterSetup({ onSetupComplete }: PrinterSetupProps) {
           <p>• Ensure your printer is on the same Wi-Fi network</p>
           <p>• Default port 8008 will be used</p>
           <p>• IP address will be saved for future use</p>
+          <p>• {isMobile ? 'Using mobile HTTP requests' : 'Using Epson ePOS SDK'}</p>
         </div>
       </CardContent>
     </Card>
+    </div>
   );
 }

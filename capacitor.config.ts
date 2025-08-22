@@ -9,6 +9,9 @@ const config: CapacitorConfig = {
     cleartext: true
   },
   plugins: {
+    CapacitorHttp: {
+      enabled: true
+    },
     BluetoothLe: {
       displayStrings: {
         scanning: "Zoeken naar printers...",
