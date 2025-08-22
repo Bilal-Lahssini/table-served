@@ -10,129 +10,46 @@ declare global {
   }
 }
 
-interface PrinterInfo {
-  deviceId: string;
-  deviceType: string;
+interface PrinterConfig {
   ipAddress: string;
-  macAddress: string;
-  deviceName: string;
+  port: number;
 }
 
 interface EpsonPrinterHook {
   isConnected: boolean;
-  discoveredPrinter: PrinterInfo | null;
-  isDiscovering: boolean;
+  printerConfig: PrinterConfig;
+  setPrinterConfig: (config: PrinterConfig) => void;
   printTicket: (order: Order, isTakeaway?: boolean, discountApplied?: boolean) => Promise<void>;
-  rediscoverPrinter: () => void;
 }
 
 export function useEpsonPrinter(): EpsonPrinterHook {
   const [isConnected, setIsConnected] = useState(false);
-  const [discoveredPrinter, setDiscoveredPrinter] = useState<PrinterInfo | null>(null);
-  const [isDiscovering, setIsDiscovering] = useState(false);
+  const [printerConfig, setPrinterConfigState] = useState<PrinterConfig>({
+    ipAddress: '192.168.1.150',
+    port: 8008
+  });
   const { toast } = useToast();
 
-  // Load saved printer from localStorage
+  // Load saved printer config from localStorage
   useEffect(() => {
-    const savedPrinter = localStorage.getItem('epson-printer');
-    if (savedPrinter) {
+    const savedConfig = localStorage.getItem('epson-printer-config');
+    if (savedConfig) {
       try {
-        const printer = JSON.parse(savedPrinter);
-        setDiscoveredPrinter(printer);
-        console.log('🔄 Loaded saved printer:', printer.deviceName, printer.ipAddress);
+        const config = JSON.parse(savedConfig);
+        setPrinterConfigState(config);
+        console.log('🔄 Loaded saved printer config:', config.ipAddress, config.port);
       } catch (error) {
-        console.error('Error loading saved printer:', error);
-        localStorage.removeItem('epson-printer');
+        console.error('Error loading saved printer config:', error);
+        localStorage.removeItem('epson-printer-config');
       }
     }
   }, []);
 
-  // Auto-discover printers on component mount
-  useEffect(() => {
-    if (!discoveredPrinter) {
-      discoverPrinters();
-    }
+  const setPrinterConfig = useCallback((config: PrinterConfig) => {
+    setPrinterConfigState(config);
+    localStorage.setItem('epson-printer-config', JSON.stringify(config));
+    console.log('💾 Saved printer config:', config.ipAddress, config.port);
   }, []);
-
-  const discoverPrinters = useCallback(() => {
-    if (typeof window === 'undefined' || !window.ePosDiscovery) {
-      console.log('⚠️ Epson Discovery SDK not loaded');
-      return;
-    }
-
-    setIsDiscovering(true);
-    console.log('🔍 Starting printer discovery...');
-
-    try {
-      const discovery = new window.ePosDiscovery();
-      
-      discovery.onReceive = (deviceInfo: any) => {
-        console.log('🖨️ Discovered printer:', deviceInfo);
-        
-        // Look specifically for TM-m30III or similar Epson thermal printers
-        if (deviceInfo.deviceName && 
-            (deviceInfo.deviceName.includes('TM-m30') || 
-             deviceInfo.deviceName.includes('TM-') ||
-             deviceInfo.deviceType === 'printer')) {
-          
-          const printerInfo: PrinterInfo = {
-            deviceId: deviceInfo.deviceId || '',
-            deviceType: deviceInfo.deviceType || 'printer',
-            ipAddress: deviceInfo.ipAddress || '',
-            macAddress: deviceInfo.macAddress || '',
-            deviceName: deviceInfo.deviceName || 'Epson Printer'
-          };
-
-          setDiscoveredPrinter(printerInfo);
-          setIsDiscovering(false);
-
-          // Save to localStorage
-          localStorage.setItem('epson-printer', JSON.stringify(printerInfo));
-          
-          console.log('✅ Printer found and saved:', printerInfo.deviceName, printerInfo.ipAddress);
-          
-          toast({
-            title: "Printer Gevonden",
-            description: `${printerInfo.deviceName} (${printerInfo.ipAddress})`,
-          });
-
-          // Stop discovery
-          discovery.stop();
-        }
-      };
-
-      discovery.onError = (error: any) => {
-        console.error('❌ Discovery error:', error);
-        setIsDiscovering(false);
-        toast({
-          title: "Discovery Fout",
-          description: "Kon geen printers vinden. Controleer WiFi verbinding.",
-          variant: "destructive",
-        });
-      };
-
-      // Start discovery
-      discovery.start();
-
-      // Stop discovery after 10 seconds if no printer found
-      setTimeout(() => {
-        if (isDiscovering) {
-          discovery.stop();
-          setIsDiscovering(false);
-          console.log('⏰ Discovery timeout - no printer found');
-        }
-      }, 10000);
-
-    } catch (error) {
-      console.error('❌ Discovery initialization error:', error);
-      setIsDiscovering(false);
-      toast({
-        title: "Discovery Fout",
-        description: "Kon printer discovery niet starten.",
-        variant: "destructive",
-      });
-    }
-  }, [isDiscovering, toast]);
 
   const formatReceipt = useCallback((order: Order, isTakeaway = false, discountApplied = false): string => {
     const subtotal = order.items.reduce((sum, item) => 
@@ -195,15 +112,6 @@ export function useEpsonPrinter(): EpsonPrinterHook {
   }, []);
 
   const printTicket = useCallback(async (order: Order, isTakeaway = false, discountApplied = false): Promise<void> => {
-    if (!discoveredPrinter) {
-      toast({
-        title: "Geen Printer",
-        description: "Geen printer gevonden. Probeer opnieuw te zoeken.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (!window.ePosPrint || !window.ePosDev) {
       toast({
         title: "SDK Niet Geladen",
@@ -214,7 +122,7 @@ export function useEpsonPrinter(): EpsonPrinterHook {
     }
 
     try {
-      console.log('🖨️ Attempting to print to:', discoveredPrinter.ipAddress);
+      console.log('🖨️ Attempting to print to:', `${printerConfig.ipAddress}:${printerConfig.port}`);
       
       const receiptData = formatReceipt(order, isTakeaway, discountApplied);
       
@@ -227,7 +135,7 @@ export function useEpsonPrinter(): EpsonPrinterHook {
       printer.addCut(printer.CUT_FEED);
       
       // Connect and print
-      device.connect(discoveredPrinter.ipAddress, 8008, (data: any) => {
+      device.connect(printerConfig.ipAddress, printerConfig.port, (data: any) => {
         if (data === 'OK' || data === 'SSL_CONNECT_OK') {
           console.log('✅ Connected to printer');
           setIsConnected(true);
@@ -271,20 +179,12 @@ export function useEpsonPrinter(): EpsonPrinterHook {
         variant: "destructive",
       });
     }
-  }, [discoveredPrinter, formatReceipt, toast]);
-
-  const rediscoverPrinter = useCallback(() => {
-    localStorage.removeItem('epson-printer');
-    setDiscoveredPrinter(null);
-    setIsConnected(false);
-    discoverPrinters();
-  }, [discoverPrinters]);
+  }, [printerConfig, formatReceipt, toast]);
 
   return {
     isConnected,
-    discoveredPrinter,
-    isDiscovering,
-    printTicket,
-    rediscoverPrinter
+    printerConfig,
+    setPrinterConfig,
+    printTicket
   };
 }
