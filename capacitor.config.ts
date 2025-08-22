@@ -9,9 +9,6 @@ const config: CapacitorConfig = {
     cleartext: true
   },
   plugins: {
-    App: {
-      launchUrl: 'https://6cb15751-21b9-48c5-baef-96fa89d96f60.lovableproject.com?forceHideBadge=true'
-    },
     BluetoothLe: {
       displayStrings: {
         scanning: "Zoeken naar printers...",

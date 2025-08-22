@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Minus, Plus, Trash2, Printer } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useEpsonPrinter } from '@/hooks/useEpsonPrinter';
-import { useTMUtility } from '@/hooks/useTMUtility';
 import { useToast } from '@/hooks/use-toast';
 
 interface OrderSummaryProps {
@@ -32,7 +31,6 @@ export function OrderSummary({
   onToggleDiscount
 }: OrderSummaryProps) {
   const { toast } = useToast();
-  const { openTMUtility } = useTMUtility();
   const { 
     isSDKReady, 
     isConnecting, 
@@ -49,15 +47,6 @@ export function OrderSummary({
       await printTicket(order, isTakeaway, discountApplied);
     } catch (error) {
       console.error('Print error:', error);
-    }
-  };
-
-  const handleTMUtilityPrint = async () => {
-    if (!order) return;
-    try {
-      await openTMUtility(order, isTakeaway, discountApplied);
-    } catch (error) {
-      console.error('TM Utility error:', error);
     }
   };
 
@@ -246,12 +235,12 @@ export function OrderSummary({
                 </div>
                 
                 <Button 
-                  onClick={handleTMUtilityPrint}
+                  onClick={handlePrintTicket}
                   disabled={order.items.length === 0}
-                  className="w-full flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+                  className="w-full flex items-center gap-2"
                 >
                   <Printer className="h-4 w-4" />
-                  🚀 Open TM Utility & Print
+                  Print Receipt
                 </Button>
               </div>
             )}
