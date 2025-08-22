@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Bluetooth, Wifi, Smartphone, Monitor, Printer } from 'lucide-react';
 import { useUnifiedPrinter } from '@/hooks/useUnifiedPrinter';
 import { useToast } from '@/hooks/use-toast';
+import { PrinterInstructions } from './PrinterInstructions';
 
 interface PrinterOptionsProps {
   order: Order;
@@ -65,9 +66,10 @@ export function PrinterOptions({ order, isTakeaway = false, discountApplied = fa
         description: "Bestelling is afgedrukt via WiFi",
       });
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Onbekende fout';
       toast({
         title: "Print fout",
-        description: `WiFi print mislukt: ${error}`,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -98,77 +100,83 @@ export function PrinterOptions({ order, isTakeaway = false, discountApplied = fa
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Printer className="h-5 w-5" />
-          Print Opties
-        </CardTitle>
-        <div className="flex items-center gap-2">
-          {getPlatformIcon()}
-          <Badge variant="secondary">{getPlatformName()}</Badge>
-        </div>
-      </CardHeader>
-      
-      <CardContent className="space-y-4">
-        {/* Bluetooth Printing */}
-        {supportsBluetooth && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Bluetooth className="h-4 w-4" />
-              <Label className="font-medium">Bluetooth Printing</Label>
-              {isConnected && <Badge variant="default" className="text-xs">Verbonden</Badge>}
-            </div>
-            <Button 
-              onClick={handleBluetoothPrint}
-              disabled={order.items.length === 0 || isConnecting}
-              className="w-full flex items-center gap-2"
-            >
-              <Bluetooth className="h-4 w-4" />
-              {isConnecting ? 'Verbinding maken...' : isConnected ? 'Print via Bluetooth' : 'Verbind & Print'}
-            </Button>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Printer className="h-5 w-5" />
+            Print Opties
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            {getPlatformIcon()}
+            <Badge variant="secondary">{getPlatformName()}</Badge>
           </div>
-        )}
-
-        {supportsBluetooth && supportsWiFi && <Separator />}
-
-        {/* WiFi Printing */}
-        {supportsWiFi && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Wifi className="h-4 w-4" />
-              <Label className="font-medium">WiFi Printing</Label>
-            </div>
+        </CardHeader>
+        
+        <CardContent className="space-y-4">
+          {/* Bluetooth Printing */}
+          {supportsBluetooth && (
             <div className="space-y-2">
-              <div>
-                <Label htmlFor="printer-ip" className="text-sm">Printer IP-adres</Label>
-                <Input
-                  id="printer-ip"
-                  value={printerIP}
-                  onChange={(e) => setPrinterIP(e.target.value)}
-                  placeholder="192.168.1.100"
-                  className="mt-1"
-                />
+              <div className="flex items-center gap-2">
+                <Bluetooth className="h-4 w-4" />
+                <Label className="font-medium">Bluetooth Printing</Label>
+                {isConnected && <Badge variant="default" className="text-xs">Verbonden</Badge>}
               </div>
               <Button 
-                onClick={handleWiFiPrint}
-                disabled={order.items.length === 0 || isWiFiPrinting}
+                onClick={handleBluetoothPrint}
+                disabled={order.items.length === 0 || isConnecting}
                 className="w-full flex items-center gap-2"
-                variant="outline"
               >
-                <Wifi className="h-4 w-4" />
-                {isWiFiPrinting ? 'Printen...' : 'Print via WiFi'}
+                <Bluetooth className="h-4 w-4" />
+                {isConnecting ? 'Verbinding maken...' : isConnected ? 'Print via Bluetooth' : 'Verbind & Print'}
               </Button>
             </div>
-          </div>
-        )}
+          )}
 
-        {!supportsBluetooth && !supportsWiFi && (
-          <div className="text-center py-4 text-muted-foreground">
-            <p>Geen print opties beschikbaar op dit platform</p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          {supportsBluetooth && supportsWiFi && <Separator />}
+
+          {/* WiFi Printing */}
+          {supportsWiFi && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Wifi className="h-4 w-4" />
+                <Label className="font-medium">WiFi Printing</Label>
+              </div>
+              <div className="space-y-2">
+                <div>
+                  <Label htmlFor="printer-ip" className="text-sm">Printer IP-adres</Label>
+                  <Input
+                    id="printer-ip"
+                    value={printerIP}
+                    onChange={(e) => setPrinterIP(e.target.value)}
+                    placeholder="192.168.1.100"
+                    className="mt-1"
+                  />
+                </div>
+                <Button 
+                  onClick={handleWiFiPrint}
+                  disabled={order.items.length === 0 || isWiFiPrinting}
+                  className="w-full flex items-center gap-2"
+                  variant="outline"
+                >
+                  <Wifi className="h-4 w-4" />
+                  {isWiFiPrinting ? 'Printen...' : 'Print via WiFi'}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {!supportsBluetooth && !supportsWiFi && (
+            <div className="text-center py-4 text-muted-foreground">
+              <p>Geen print opties beschikbaar op dit platform</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      
+      <div className="mt-4">
+        <PrinterInstructions platform={platform} />
+      </div>
+    </>
   );
 }

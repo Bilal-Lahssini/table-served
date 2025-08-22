@@ -75,31 +75,53 @@ export function useUnifiedPrinter(): UnifiedPrinterHook {
     const receiptText = formatReceiptForWiFi(order, isTakeaway, discountApplied);
     
     try {
-      const response = await fetch(`http://${printerIP}/cgi-bin/epos/service.cgi?devid=local_printer&timeout=10000`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'SOAPAction': '"http://www.epson-pos.com/schemas/2011/03/epos-print/Service/Print"',
-        },
-        body: JSON.stringify({
-          "param": {
-            "devid": "local_printer",
-            "timeout": 10000
-          },
-          "data": receiptText
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`WiFi print failed: ${response.status} ${response.statusText}`);
+      // Try Epson ePOS SDK first if available
+      if (platform === 'web' && typeof window !== 'undefined' && (window as any).epos) {
+        const epos = (window as any).epos;
+        const device = new epos.Device();
+        
+        device.connect(`http://${printerIP}`, 8008, () => {
+          const printer = device.createPrinter(device.ASB_NO_RESPONSE, 60000, 'TM-m30III');
+          
+          printer.addTextAlign(printer.ALIGN_CENTER);
+          printer.addText('===============================\n');
+          printer.addText('         RESTAURANT\n');
+          printer.addText('===============================\n');
+          printer.addTextAlign(printer.ALIGN_LEFT);
+          
+          const lines = receiptText.split('\n');
+          lines.forEach(line => {
+            if (line.trim()) {
+              printer.addText(line + '\n');
+            }
+          });
+          
+          printer.addCut(printer.CUT_FEED);
+          printer.send();
+          
+          device.disconnect();
+          console.log('WiFi print successful via ePOS SDK');
+        });
+        return;
       }
-
-      console.log('WiFi print successful');
+      
+      // Fallback: Try direct HTTP (will likely fail due to CORS in browser)
+      if (platform !== 'web') {
+        // For mobile platforms, try HTTP request
+        const response = await fetch(`http://${printerIP}:8008/`, {
+          method: 'GET',
+          mode: 'no-cors',
+        });
+        console.log('Printer reachable, but printing requires native implementation');
+        throw new Error('Voor mobiele apparaten gebruik de Bluetooth optie of installeer de native app');
+      } else {
+        throw new Error('Epson ePOS SDK niet geladen. Herlaad de pagina of gebruik Bluetooth printing.');
+      }
     } catch (error) {
       console.error('WiFi print error:', error);
-      throw error;
+      throw new Error(`WiFi print mislukt: ${error instanceof Error ? error.message : 'Onbekende fout'}`);
     }
-  }, [formatReceiptForWiFi]);
+  }, [formatReceiptForWiFi, platform]);
 
   const connectAndPrint = useCallback(async (order: Order, isTakeaway: boolean, discountApplied: boolean) => {
     if (platform === 'web' && supportsBluetooth) {
