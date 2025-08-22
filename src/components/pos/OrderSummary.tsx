@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Minus, Plus, Trash2, Printer } from 'lucide-react';
+import { Minus, Plus, Trash2, Printer, Copy } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useEpsonPrinter } from '@/hooks/useEpsonPrinter';
 import { useToast } from '@/hooks/use-toast';
@@ -56,6 +56,62 @@ export function OrderSummary({
       await connectToPrinter(ipAddress);
     } catch (error) {
       console.error('Connection error:', error);
+    }
+  };
+
+  const formatReceiptForTMUtility = () => {
+    if (!order) return '';
+    
+    const now = new Date();
+    let receipt = '';
+    
+    // Header
+    receipt += '================================\n';
+    receipt += '         RESTAURANT RECEIPT\n';
+    receipt += '================================\n';
+    receipt += `${isTakeaway ? 'TAKEAWAY ORDER' : `TABLE ${order.tableId}`}\n`;
+    receipt += `Date: ${now.toLocaleDateString()}\n`;
+    receipt += `Time: ${now.toLocaleTimeString()}\n`;
+    receipt += '--------------------------------\n';
+    
+    // Items
+    order.items.forEach((item) => {
+      receipt += `${item.menuItem.name}\n`;
+      receipt += `  ${item.quantity} x €${item.menuItem.price.toFixed(2)} = €${(item.quantity * item.menuItem.price).toFixed(2)}\n`;
+    });
+    
+    receipt += '--------------------------------\n';
+    
+    // Totals
+    if (isTakeaway && discountApplied) {
+      receipt += `Subtotal:           €${subtotal.toFixed(2)}\n`;
+      receipt += `15% Discount:      -€${discountAmount.toFixed(2)}\n`;
+      receipt += '--------------------------------\n';
+    }
+    
+    receipt += `TOTAL:              €${total.toFixed(2)}\n`;
+    receipt += '================================\n';
+    receipt += '        Thank you!\n';
+    receipt += '================================\n';
+    
+    return receipt;
+  };
+
+  const handleCopyReceipt = async () => {
+    try {
+      const receiptText = formatReceiptForTMUtility();
+      await navigator.clipboard.writeText(receiptText);
+      toast({
+        title: "Receipt Copied!",
+        description: "Receipt text copied to clipboard. You can now paste it in TM Utility.",
+      });
+    } catch (error) {
+      console.error('Copy error:', error);
+      toast({
+        title: "Copy Failed",
+        description: "Could not copy to clipboard. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -246,6 +302,17 @@ export function OrderSummary({
             )}
           </div>
         )}
+
+        {/* Copy Receipt for TM Utility */}
+        <Button 
+          onClick={handleCopyReceipt}
+          disabled={order.items.length === 0}
+          className="w-full flex items-center gap-2 mt-4"
+          variant="outline"
+        >
+          <Copy className="h-4 w-4" />
+          📋 Copy Receipt for TM Utility
+        </Button>
 
         <div className="flex gap-2 mt-4">
           <Button 
