@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Settings, Wifi } from 'lucide-react';
 import { useEpsonPrinter } from '@/hooks/useEpsonPrinter';
+import { PrinterNetworkScanner } from './PrinterNetworkScanner';
 
 interface PrinterSetupProps {
   onSetupComplete?: () => void;
@@ -14,6 +15,7 @@ interface PrinterSetupProps {
 export function PrinterSetup({ onSetupComplete }: PrinterSetupProps) {
   const [ipAddress, setIpAddress] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [showScanner, setShowScanner] = useState(false);
   
   const {
     isConnecting,
@@ -56,6 +58,12 @@ export function PrinterSetup({ onSetupComplete }: PrinterSetupProps) {
   const handleClear = () => {
     clearConfiguration();
     setIpAddress('');
+    setError(null);
+  };
+
+  const handlePrinterFound = (ip: string) => {
+    setIpAddress(ip);
+    setShowScanner(false);
     setError(null);
   };
 
@@ -102,35 +110,51 @@ export function PrinterSetup({ onSetupComplete }: PrinterSetupProps) {
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="ip-address">Printer IP Address</Label>
-              <Input
-                id="ip-address"
-                type="text"
-                placeholder="e.g., 192.168.1.100"
-                value={ipAddress}
-                onChange={(e) => setIpAddress(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSetup()}
-              />
-              <p className="text-sm text-muted-foreground">
-                Find your printer's IP in the network settings or print a network status page
-              </p>
-            </div>
-            
-            <Button 
-              onClick={handleSetup}
-              disabled={isConnecting || !ipAddress.trim()}
-              className="w-full"
-            >
-              {isConnecting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Connecting to Printer...
-                </>
-              ) : (
-                'Connect to Printer'
-              )}
-            </Button>
+            {showScanner ? (
+              <PrinterNetworkScanner onPrinterFound={handlePrinterFound} />
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="ip-address">Printer IP Address</Label>
+                  <Input
+                    id="ip-address"
+                    type="text"
+                    placeholder="e.g., 192.168.0.156"
+                    value={ipAddress}
+                    onChange={(e) => setIpAddress(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSetup()}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Enter your printer's IP address or scan the network to find it
+                  </p>
+                </div>
+                
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={handleSetup}
+                    disabled={isConnecting || !ipAddress.trim()}
+                    className="flex-1"
+                  >
+                    {isConnecting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Connecting...
+                      </>
+                    ) : (
+                      'Connect to Printer'
+                    )}
+                  </Button>
+                  
+                  <Button 
+                    onClick={() => setShowScanner(true)}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    Scan Network
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         )}
         
