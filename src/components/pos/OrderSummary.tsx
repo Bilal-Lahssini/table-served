@@ -176,41 +176,53 @@ export function OrderSummary({
           </div>
         )}
 
-        {/* Printer Connection */}
+        {/* Printer Connection & Options */}
         {isSDKReady && (
           <div className="mt-6 space-y-3">
             {!connectedPrinter ? (
               <div className="space-y-2">
+                <div className="text-sm text-muted-foreground mb-2">
+                  🖨️ Epson TM-m30III Printing Options:
+                </div>
+                
+                <Button 
+                  onClick={() => handleConnect('192.168.0.156')}
+                  disabled={isConnecting}
+                  className="w-full"
+                >
+                  {isConnecting ? 'Connecting...' : '🔌 Connect to TM-m30III (192.168.0.156)'}
+                </Button>
+                
                 <div className="flex gap-2">
                   <Button 
                     onClick={discoverPrinters}
                     variant="outline"
                     className="flex-1"
                   >
-                    🔍 Discover Printers
+                    🔍 Find Printers
                   </Button>
                   <Button 
-                    onClick={() => handleConnect('192.168.0.156')}
-                    disabled={isConnecting}
+                    onClick={handleGenerateQR}
+                    disabled={order.items.length === 0}
                     variant="outline"
                     className="flex-1"
                   >
-                    {isConnecting ? 'Connecting...' : 'Connect Default'}
+                    📱 TM Utility QR
                   </Button>
                 </div>
                 
                 {discoveredPrinters.length > 0 && (
                   <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Found printers:</p>
+                    <p className="text-xs text-muted-foreground">Found printers:</p>
                     {discoveredPrinters.map((printer, idx) => (
                       <Button
                         key={idx}
                         variant="outline"
                         size="sm"
                         onClick={() => handleConnect(printer.ipAddress)}
-                        className="w-full justify-start text-left"
+                        className="w-full justify-start text-left text-xs"
                       >
-                        <Printer className="h-4 w-4 mr-2" />
+                        <Printer className="h-3 w-3 mr-2" />
                         {printer.printerName} ({printer.ipAddress})
                       </Button>
                     ))}
@@ -219,12 +231,17 @@ export function OrderSummary({
               </div>
             ) : (
               <div className="space-y-2">
-                <div className="flex items-center justify-between p-2 bg-green-50 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
                   <div className="flex items-center gap-2">
                     <Printer className="h-4 w-4 text-green-600" />
-                    <span className="text-sm text-green-700">
-                      Connected: {connectedPrinter}
-                    </span>
+                    <div>
+                      <div className="text-sm font-medium text-green-800">
+                        TM-m30III Connected
+                      </div>
+                      <div className="text-xs text-green-600">
+                        {connectedPrinter}
+                      </div>
+                    </div>
                   </div>
                   <Button
                     onClick={disconnect}
@@ -235,31 +252,34 @@ export function OrderSummary({
                   </Button>
                 </div>
                 
-                <Button 
-                  onClick={handlePrintTicket}
-                  disabled={order.items.length === 0}
-                  className="w-full flex items-center gap-2"
-                >
-                  <Printer className="h-4 w-4" />
-                  Print Receipt (ePOS)
-                </Button>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button 
+                    onClick={handlePrintTicket}
+                    disabled={order.items.length === 0}
+                    className="flex items-center gap-2"
+                  >
+                    <Printer className="h-4 w-4" />
+                    Print Direct
+                  </Button>
+                  
+                  <Button 
+                    onClick={handleGenerateQR}
+                    disabled={order.items.length === 0}
+                    variant="outline"
+                    className="flex items-center gap-2"
+                  >
+                    <QrCode className="h-4 w-4" />
+                    TM Utility
+                  </Button>
+                </div>
+                
+                <div className="p-2 bg-blue-50 rounded text-xs text-blue-700">
+                  💡 <strong>Tip:</strong> If direct print doesn't work, use TM Utility QR code - it always works with Epson thermal printers!
+                </div>
               </div>
             )}
           </div>
         )}
-
-        {/* QR Code Option */}
-        <div className="mt-4">
-          <Button 
-            onClick={handleGenerateQR}
-            disabled={order.items.length === 0}
-            variant="outline"
-            className="w-full flex items-center gap-2"
-          >
-            <QrCode className="h-4 w-4" />
-            Generate TM Utility QR
-          </Button>
-        </div>
 
         <div className="flex gap-2 mt-4">
           <Button 
