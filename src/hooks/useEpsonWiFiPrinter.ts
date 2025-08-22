@@ -28,54 +28,146 @@ export function useEpsonWiFiPrinter(): EpsonWiFiPrinterHook {
 
   // Auto-discover printers on first load
   useEffect(() => {
+    const startDiscovery = async () => {
+      console.log('=== Starting Epson Printer Discovery ===');
+      setIsDiscovering(true);
+      const found: EpsonPrinter[] = [];
+      
+      try {
+        const ranges = [
+          '192.168.1', '192.168.0', '192.168.2', '192.168.100',
+          '10.0.0', '10.0.1', '172.16.0', '172.16.1'
+        ];
+        
+        const ips: string[] = [];
+        ranges.forEach(range => {
+          for (let i = 1; i < 50; i++) {
+            ips.push(`${range}.${i}`);
+          }
+        });
+        
+        const commonPorts = [8008, 9100, 631];
+        console.log(`Scanning ${ips.length} IP addresses with ports:`, commonPorts);
+        
+        const batchSize = 5;
+        let totalTested = 0;
+        
+        for (let i = 0; i < ips.length; i += batchSize) {
+          const batch = ips.slice(i, i + batchSize);
+          console.log(`Testing batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(ips.length/batchSize)}: ${batch.join(', ')}`);
+          
+          const promises = batch.flatMap(ip =>
+            commonPorts.map(async port => {
+              console.log(`Testing ${ip}:${port}...`);
+              
+              // Simple connection test
+              try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 2000);
+                
+                await fetch(`http://${ip}:${port}/`, { 
+                  method: 'GET',
+                  signal: controller.signal,
+                  mode: 'no-cors'
+                });
+                
+                clearTimeout(timeoutId);
+                console.log(`✓ FOUND PRINTER at ${ip}:${port}`);
+                totalTested++;
+                return { ip, port };
+              } catch (error) {
+                totalTested++;
+                return null;
+              }
+            })
+          );
+          
+          const results = await Promise.all(promises);
+          results.forEach(result => {
+            if (result && !found.some(p => p.ip === result.ip && p.port === result.port)) {
+              found.push(result);
+            }
+          });
+          
+          // Auto-connect to first found printer
+          if (found.length > 0 && !isConnected) {
+            const firstPrinter = found[0];
+            console.log(`🔗 Auto-connecting to first found printer: ${firstPrinter.ip}:${firstPrinter.port}`);
+            
+            setConnectedPrinter(firstPrinter);
+            setIsConnected(true);
+            localStorage.setItem('epson_printer', JSON.stringify(firstPrinter));
+            console.log(`Connected to printer: ${firstPrinter.ip}:${firstPrinter.port}`);
+            break;
+          }
+          
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        setDiscoveredPrinters(found);
+        console.log(`=== Discovery Complete ===`);
+        console.log(`Tested: ${totalTested} connections`);
+        console.log(`Found: ${found.length} printers`);
+        
+        if (found.length === 0) {
+          console.log('No printers found. Make sure your Epson TM-m30III is connected to the same Wi-Fi network.');
+        }
+        
+      } catch (error) {
+        console.error('=== Discovery Failed ===', error);
+      } finally {
+        setIsDiscovering(false);
+      }
+    };
+    
     const savedPrinter = localStorage.getItem('epson_printer');
     if (savedPrinter) {
       try {
         const printer = JSON.parse(savedPrinter) as EpsonPrinter;
         setConnectedPrinter(printer);
         setIsConnected(true);
+        console.log('Loaded saved printer:', printer);
       } catch (error) {
         console.error('Failed to load saved printer:', error);
         localStorage.removeItem('epson_printer');
+        startDiscovery();
       }
     } else {
-      // Auto-discover if no saved printer
-      discoverPrinters();
+      console.log('No saved printer found, starting discovery...');
+      startDiscovery();
     }
   }, []);
 
   const testPrinterConnection = useCallback(async (ip: string, port: number): Promise<boolean> => {
     return new Promise((resolve) => {
-      const timeout = 3000;
-      const startTime = Date.now();
+      const timeout = 2000;
       
-      // Use XMLHttpRequest for better browser compatibility
-      const xhr = new XMLHttpRequest();
-      xhr.timeout = timeout;
+      // For Epson printers, try to connect via fetch with a simple request
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
       
-      const checkConnection = () => {
-        if (Date.now() - startTime > timeout) {
-          resolve(false);
-          return;
-        }
-        
-        try {
-          xhr.open('GET', `http://${ip}:${port}/`, true);
-          xhr.onreadystatechange = () => {
-            if (xhr.readyState === 4) {
-              // Any response (including errors) indicates the printer is reachable
-              resolve(xhr.status > 0 || xhr.status === 0);
-            }
-          };
-          xhr.onerror = () => resolve(false);
-          xhr.ontimeout = () => resolve(false);
-          xhr.send();
-        } catch (error) {
-          resolve(false);
-        }
-      };
+      // Try common Epson printer endpoints
+      const testEndpoints = [
+        `http://${ip}:${port}/`,
+        `http://${ip}:${port}/status`,
+        `http://${ip}:${port}/cgi-bin/epos/service.cgi`
+      ];
       
-      checkConnection();
+      Promise.race(
+        testEndpoints.map(endpoint =>
+          fetch(endpoint, { 
+            method: 'GET',
+            signal: controller.signal,
+            mode: 'no-cors' // Allow cross-origin for printer detection
+          }).then(() => true).catch(() => false)
+        )
+      ).then(result => {
+        clearTimeout(timeoutId);
+        resolve(result);
+      }).catch(() => {
+        clearTimeout(timeoutId);
+        resolve(false);
+      });
     });
   }, []);
 
@@ -98,25 +190,32 @@ export function useEpsonWiFiPrinter(): EpsonWiFiPrinterHook {
   }, []);
 
   const discoverPrinters = useCallback(async () => {
+    console.log('=== Starting Epson Printer Discovery ===');
     setIsDiscovering(true);
     const found: EpsonPrinter[] = [];
     
     try {
       const ips = getLocalIPRange();
-      const commonPorts = [8008, 9100, 631]; // Epson common ports
+      const commonPorts = [8008, 9100, 631]; // Epson TM-m30III uses port 8008
       
-      console.log('Starting printer discovery...');
+      console.log(`Scanning ${ips.length} IP addresses with ports:`, commonPorts);
       
-      // Test connections in batches for better performance
-      const batchSize = 10;
+      // Test connections in smaller batches for better performance
+      const batchSize = 5;
+      let totalTested = 0;
+      
       for (let i = 0; i < ips.length; i += batchSize) {
         const batch = ips.slice(i, i + batchSize);
+        console.log(`Testing batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(ips.length/batchSize)}: ${batch.join(', ')}`);
         
         const promises = batch.flatMap(ip =>
           commonPorts.map(async port => {
+            console.log(`Testing ${ip}:${port}...`);
             const isReachable = await testPrinterConnection(ip, port);
+            totalTested++;
+            
             if (isReachable) {
-              console.log(`Found printer at ${ip}:${port}`);
+              console.log(`✓ FOUND PRINTER at ${ip}:${port}`);
               return { ip, port };
             }
             return null;
@@ -133,17 +232,31 @@ export function useEpsonWiFiPrinter(): EpsonWiFiPrinterHook {
         // Auto-connect to first found printer if none is connected
         if (found.length > 0 && !isConnected) {
           const firstPrinter = found[0];
-          console.log(`Auto-connecting to first found printer: ${firstPrinter.ip}:${firstPrinter.port}`);
-          await connectToPrinter(firstPrinter);
+          console.log(`🔗 Auto-connecting to first found printer: ${firstPrinter.ip}:${firstPrinter.port}`);
+          
+          // Set the printer directly without the circular dependency
+          setConnectedPrinter(firstPrinter);
+          setIsConnected(true);
+          localStorage.setItem('epson_printer', JSON.stringify(firstPrinter));
+          console.log(`Connected to printer: ${firstPrinter.ip}:${firstPrinter.port}`);
           break;
         }
+        
+        // Short delay between batches to avoid overwhelming the network
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
       
       setDiscoveredPrinters(found);
-      console.log(`Discovery complete. Found ${found.length} printers.`);
+      console.log(`=== Discovery Complete ===`);
+      console.log(`Tested: ${totalTested} connections`);
+      console.log(`Found: ${found.length} printers`);
+      
+      if (found.length === 0) {
+        console.log('No printers found. Make sure your Epson TM-m30III is connected to the same Wi-Fi network.');
+      }
       
     } catch (error) {
-      console.error('Discovery failed:', error);
+      console.error('=== Discovery Failed ===', error);
     } finally {
       setIsDiscovering(false);
     }
