@@ -4,9 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Minus, Plus, Trash2, Printer, Copy, Wifi } from 'lucide-react';
+import { Minus, Plus, Trash2, Copy } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { useEpsonPrinter } from '@/hooks/useEpsonPrinter';
 import { useToast } from '@/hooks/use-toast';
 
 interface OrderSummaryProps {
@@ -31,30 +30,19 @@ export function OrderSummary({
   onToggleDiscount
 }: OrderSummaryProps) {
   const { toast } = useToast();
-  const [manualIP, setManualIP] = useState('192.168.1.100');
-  const { 
-    isSDKReady, 
-    isConnecting, 
-    connectedPrinter, 
-    discoveredPrinters,
-    connectToPrinter,
-    printTicket, 
-    discoverPrinters,
-    disconnect 
-  } = useEpsonPrinter();
+  
   
   const handlePrintTicket = async () => {
     try {
-      await printTicket(order, isTakeaway, discountApplied);
+      console.log('Print functionality removed - use copy receipt instead');
     } catch (error) {
       console.error('Print error:', error);
     }
   };
 
-
   const handleConnect = async (ipAddress: string) => {
     try {
-      await connectToPrinter(ipAddress);
+      console.log('Connect functionality removed - use copy receipt instead');
     } catch (error) {
       console.error('Connection error:', error);
     }
@@ -231,97 +219,6 @@ export function OrderSummary({
             >
               {discountApplied ? '15% Korting Toegepast ✓' : '15% Korting Toepassen'}
             </Button>
-          </div>
-        )}
-
-        {/* Printer Connection & Options */}
-        {isSDKReady && (
-          <div className="mt-6 space-y-3">
-            {!connectedPrinter ? (
-              <div className="space-y-2">
-                <div className="text-sm text-muted-foreground mb-2">
-                  🖨️ Epson TM-m30III Printing Options:
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="text-xs text-muted-foreground">Enter printer IP address:</div>
-                  <div className="flex gap-2">
-                    <Input 
-                      value={manualIP}
-                      onChange={(e) => setManualIP(e.target.value)}
-                      placeholder="192.168.1.100"
-                      className="flex-1"
-                    />
-                    <Button 
-                      onClick={() => handleConnect(manualIP)}
-                      disabled={isConnecting || !manualIP}
-                      className="shrink-0"
-                    >
-                      <Wifi className="h-4 w-4 mr-1" />
-                      {isConnecting ? 'Connecting...' : 'Connect'}
-                    </Button>
-                  </div>
-                </div>
-                
-                <Button 
-                  onClick={discoverPrinters}
-                  variant="outline"
-                  className="w-full"
-                >
-                  🔍 Find Printers on Network
-                </Button>
-                
-                {discoveredPrinters.length > 0 && (
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Found printers:</p>
-                    {discoveredPrinters.map((printer, idx) => (
-                      <Button
-                        key={idx}
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleConnect(printer.ipAddress)}
-                        className="w-full justify-start text-left text-xs"
-                      >
-                        <Printer className="h-3 w-3 mr-2" />
-                        {printer.printerName} ({printer.ipAddress})
-                      </Button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
-                  <div className="flex items-center gap-2">
-                    <Printer className="h-4 w-4 text-green-600" />
-                    <div>
-                      <div className="text-sm font-medium text-green-800">
-                        TM-m30III Connected
-                      </div>
-                      <div className="text-xs text-green-600">
-                        {connectedPrinter}
-                      </div>
-                    </div>
-                  </div>
-                  <Button
-                    onClick={disconnect}
-                    variant="outline"
-                    size="sm"
-                  >
-                    Disconnect
-                  </Button>
-                </div>
-                
-                <Button 
-                  onClick={handlePrintTicket}
-                  disabled={order.items.length === 0}
-                  className="w-full flex items-center gap-2"
-                >
-                  <Printer className="h-4 w-4" />
-                  Print Receipt
-                </Button>
-              </div>
-            )}
           </div>
         )}
 
