@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Order } from '@/types/pos';
 import { useToast } from '@/hooks/use-toast';
+import QRCode from 'qrcode';
 
 declare global {
   interface Window {
@@ -21,6 +22,7 @@ interface EpsonPrinterHook {
   printerConfig: PrinterConfig;
   setPrinterConfig: (config: PrinterConfig) => void;
   printTicket: (order: Order, isTakeaway?: boolean, discountApplied?: boolean) => Promise<void>;
+  generatePrintQR: (order: Order, isTakeaway?: boolean, discountApplied?: boolean) => Promise<void>;
 }
 
 export function useEpsonPrinter(): EpsonPrinterHook {
@@ -392,11 +394,160 @@ export function useEpsonPrinter(): EpsonPrinterHook {
     }
   }, [formatReceipt, toast, isSDKReady]);
 
+  const generatePrintQR = useCallback(async (order: Order, isTakeaway = false, discountApplied = false): Promise<void> => {
+    try {
+      console.log('📱 Generating QR code for TM Utility...');
+      
+      const receiptData = formatReceipt(order, isTakeaway, discountApplied);
+      
+      // Create TM Utility compatible data structure
+      const tmUtilityData = {
+        type: 'TM_UTILITY_PRINT',
+        printerIp: printerConfig.ipAddress,
+        port: printerConfig.port,
+        data: receiptData,
+        cut: true,
+        timestamp: new Date().toISOString(),
+        orderId: order.id
+      };
+      
+      // Convert to JSON string for QR code
+      const qrData = JSON.stringify(tmUtilityData);
+      
+      // Generate QR code as data URL
+      const qrCodeDataUrl = await QRCode.toDataURL(qrData, {
+        width: 300,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+      
+      // Display QR code in a popup window
+      const qrWindow = window.open('', '_blank', 'width=500,height=600,scrollbars=yes,resizable=yes');
+      if (qrWindow) {
+        qrWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Print QR Code</title>
+              <style>
+                body {
+                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                  margin: 0;
+                  padding: 20px;
+                  background: #f5f5f5;
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  justify-content: center;
+                  min-height: 100vh;
+                }
+                .container {
+                  background: white;
+                  padding: 30px;
+                  border-radius: 12px;
+                  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+                  text-align: center;
+                  max-width: 400px;
+                }
+                .qr-code {
+                  margin: 20px 0;
+                  border: 2px solid #e0e0e0;
+                  border-radius: 8px;
+                  padding: 10px;
+                  background: white;
+                }
+                .instructions {
+                  margin-top: 20px;
+                  padding: 15px;
+                  background: #e8f4fd;
+                  border-radius: 8px;
+                  border-left: 4px solid #2196f3;
+                }
+                .steps {
+                  text-align: left;
+                  margin-top: 15px;
+                }
+                .step {
+                  margin: 8px 0;
+                  padding: 5px 0;
+                  border-bottom: 1px solid #eee;
+                }
+                .order-info {
+                  background: #f8f9fa;
+                  padding: 10px;
+                  border-radius: 6px;
+                  margin-bottom: 15px;
+                  font-size: 14px;
+                }
+                h1 {
+                  color: #333;
+                  margin-bottom: 10px;
+                }
+                h3 {
+                  color: #2196f3;
+                  margin-bottom: 10px;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <h1>🖨️ Print QR Code</h1>
+                
+                <div class="order-info">
+                  <strong>Order ${order.id.substring(0, 8)}</strong><br>
+                  ${isTakeaway ? 'Afhaal' : 'Tafel ' + order.tableId} - ${order.items.length} items<br>
+                  Printer: ${printerConfig.ipAddress}:${printerConfig.port}
+                </div>
+                
+                <img src="${qrCodeDataUrl}" alt="Print QR Code" class="qr-code" />
+                
+                <div class="instructions">
+                  <h3>📱 Hoe te gebruiken:</h3>
+                  <div class="steps">
+                    <div class="step">1️⃣ Open <strong>Epson TM Utility</strong> app</div>
+                    <div class="step">2️⃣ Ga naar <strong>QR Code Scanner</strong></div>
+                    <div class="step">3️⃣ Scan deze QR code</div>
+                    <div class="step">4️⃣ De printer zal automatisch de receipt afdrukken</div>
+                  </div>
+                </div>
+                
+                <div style="margin-top: 20px; font-size: 12px; color: #666;">
+                  💡 Zorg dat je printer verbonden is en TM Utility draait
+                </div>
+              </div>
+            </body>
+          </html>
+        `);
+        qrWindow.document.close();
+        
+        toast({
+          title: "QR Code Gegenereerd",
+          description: "Scan met TM Utility app om af te drukken.",
+          duration: 5000,
+        });
+      }
+      
+    } catch (error) {
+      console.error('❌ QR code generation error:', error);
+      toast({
+        title: "QR Code Fout",
+        description: "Kon QR code niet genereren.",
+        variant: "destructive",
+      });
+    }
+  }, [printerConfig, formatReceipt, toast]);
+
   return {
     isConnected,
     isSDKReady,
     printerConfig,
     setPrinterConfig,
-    printTicket
+    printTicket,
+    generatePrintQR
   };
 }
