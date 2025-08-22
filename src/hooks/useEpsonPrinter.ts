@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Order } from '@/types/pos';
 import { useToast } from '@/hooks/use-toast';
+import { useNativeBLEPrinter } from '@/hooks/useNativeBLEPrinter';
+import { useWebBluetoothPrinter } from '@/hooks/useWebBluetoothPrinter';
 import QRCode from 'qrcode';
 
 declare global {
@@ -15,11 +17,31 @@ interface EpsonPrinterHook {
   isSDKReady: boolean;
   printTicket: (order: Order, isTakeaway?: boolean, discountApplied?: boolean) => Promise<void>;
   generateOrderQR: (order: Order, isTakeaway?: boolean, discountApplied?: boolean) => Promise<void>;
+  
+  // BLE functionality
+  nativeBLE: {
+    isConnected: boolean;
+    isConnecting: boolean;
+    connectAndPrint: (order: Order, isTakeaway: boolean, discountApplied: boolean) => Promise<void>;
+    connectToPrinter: () => Promise<void>;
+    disconnect: () => Promise<void>;
+  };
+  
+  webBLE: {
+    isConnected: boolean;
+    isConnecting: boolean;
+    connectAndPrint: (order: Order, isTakeaway: boolean, discountApplied: boolean) => Promise<void>;
+    disconnect: () => Promise<void>;
+  };
 }
 
 export function useEpsonPrinter(): EpsonPrinterHook {
   const [isSDKReady, setIsSDKReady] = useState(false);
   const { toast } = useToast();
+  
+  // Initialize BLE hooks
+  const nativeBLE = useNativeBLEPrinter();
+  const webBLE = useWebBluetoothPrinter();
 
   // Check SDK readiness
   useEffect(() => {
@@ -485,6 +507,19 @@ export function useEpsonPrinter(): EpsonPrinterHook {
   return {
     isSDKReady,
     printTicket,
-    generateOrderQR
+    generateOrderQR,
+    nativeBLE: {
+      isConnected: nativeBLE.isConnected,
+      isConnecting: nativeBLE.isConnecting,
+      connectAndPrint: nativeBLE.connectAndPrint,
+      connectToPrinter: nativeBLE.connectToPrinter,
+      disconnect: nativeBLE.disconnect
+    },
+    webBLE: {
+      isConnected: webBLE.isConnected,
+      isConnecting: webBLE.isConnecting,
+      connectAndPrint: webBLE.connectAndPrint,
+      disconnect: webBLE.disconnect
+    }
   };
 }
