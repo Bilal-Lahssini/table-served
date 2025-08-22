@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Minus, Plus, Trash2, Printer } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { useWebBluetoothPrinter } from '@/hooks/useWebBluetoothPrinter';
+import { useEpsonWiFiPrinter } from '@/hooks/useEpsonWiFiPrinter';
 
 interface OrderSummaryProps {
   order: Order | null;
@@ -27,7 +27,7 @@ export function OrderSummary({
   discountApplied = false,
   onToggleDiscount
 }: OrderSummaryProps) {
-  const { connectAndPrint, isConnecting, isConnected } = useWebBluetoothPrinter();
+  const { connectAndPrint, isConnecting, isConnected, isDiscovering } = useEpsonWiFiPrinter();
 
   const handlePrintTicket = async () => {
     if (!order) return;
@@ -152,10 +152,10 @@ export function OrderSummary({
             onClick={handlePrintTicket}
             variant="outline"
             className="w-full flex items-center gap-2"
-            disabled={order.items.length === 0 || isConnecting}
+            disabled={order.items.length === 0 || isConnecting || isDiscovering}
           >
             <Printer className="h-4 w-4" />
-            {isConnecting ? 'Verbinding maken...' : isConnected ? 'Print Ticket' : 'Verbind & Print Ticket'}
+            {isDiscovering ? 'Printer zoeken...' : isConnecting ? 'Verbinding maken...' : isConnected ? 'Print Ticket' : 'Zoek & Print'}
           </Button>
           
           <div className="flex gap-2">
