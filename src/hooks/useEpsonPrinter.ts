@@ -142,39 +142,27 @@ export function useEpsonPrinter(): EpsonPrinterHook {
       
       const builder = new window.ePosPrint();
       
-      // Initialize printer
+      // Initialize printer - Same format as copy receipt
       builder.addTextAlign(builder.ALIGN_CENTER);
-      builder.addTextSize(2, 2);
+      builder.addText("================================\n");
       builder.addTextStyle(false, false, true, builder.COLOR_1);
-      builder.addText("PEPE'S RESTAURANT\n");
+      builder.addText("         RESTAURANT RECEIPT\n");
       builder.addTextStyle(false, false, false, builder.COLOR_NONE);
-      builder.addTextSize(1, 1);
       builder.addText("================================\n");
       
       // Order info
       builder.addTextAlign(builder.ALIGN_LEFT);
       const now = new Date();
-      const date = now.toLocaleDateString('nl-NL');
-      const time = now.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
       
-      builder.addText(`Datum: ${date}  Tijd: ${time}\n`);
-      builder.addText(`Bestelling: ${isTakeaway ? 'AFHAAL' : `TAFEL ${order.tableId}`}\n`);
-      builder.addText(`Order ID: ${order.id.substring(0, 8)}\n`);
-      builder.addText('--------------------------------\n\n');
+      builder.addText(`${isTakeaway ? 'TAKEAWAY ORDER' : `TABLE ${order.tableId}`}\n`);
+      builder.addText(`Date: ${now.toLocaleDateString()}\n`);
+      builder.addText(`Time: ${now.toLocaleTimeString()}\n`);
+      builder.addText('--------------------------------\n');
       
-      // Items
-      builder.addTextStyle(false, false, true, builder.COLOR_1);
-      builder.addText('BESTELLING:\n');
-      builder.addTextStyle(false, false, false, builder.COLOR_NONE);
-      
+      // Items - Same format as copy receipt
       order.items.forEach(item => {
-        const itemTotal = item.menuItem.price * item.quantity;
-        builder.addText(`${item.quantity}x ${item.menuItem.name}\n`);
-        builder.addText(`   €${item.menuItem.price.toFixed(2)} x ${item.quantity} = €${itemTotal.toFixed(2)}\n`);
-        if (item.notes) {
-          builder.addText(`   Notitie: ${item.notes}\n`);
-        }
-        builder.addText('\n');
+        builder.addText(`${item.menuItem.name}\n`);
+        builder.addText(`  ${item.quantity} x €${item.menuItem.price.toFixed(2)} = €${(item.quantity * item.menuItem.price).toFixed(2)}\n`);
       });
       
       // Totals
@@ -185,21 +173,23 @@ export function useEpsonPrinter(): EpsonPrinterHook {
       const total = subtotal - discountAmount;
       
       builder.addText('--------------------------------\n');
+      
+      // Totals - Same format as copy receipt
       if (isTakeaway && discountApplied) {
-        builder.addText(`Subtotaal:          €${subtotal.toFixed(2)}\n`);
-        builder.addText(`15% Korting:       -€${discountAmount.toFixed(2)}\n`);
+        builder.addText(`Subtotal:           €${subtotal.toFixed(2)}\n`);
+        builder.addText(`15% Discount:      -€${discountAmount.toFixed(2)}\n`);
         builder.addText('--------------------------------\n');
       }
       
       builder.addTextStyle(false, false, true, builder.COLOR_1);
-      builder.addText(`TOTAAL:            €${total.toFixed(2)}\n`);
+      builder.addText(`TOTAL:              €${total.toFixed(2)}\n`);
       builder.addTextStyle(false, false, false, builder.COLOR_NONE);
+      builder.addText("================================\n");
       
       // Footer
-      builder.addFeedLine(2);
       builder.addTextAlign(builder.ALIGN_CENTER);
-      builder.addText('Bedankt voor uw bezoek!\n');
-      builder.addText('Tot ziens!\n');
+      builder.addText("        Thank you!\n");
+      builder.addText("================================\n");
       
       // Cut paper
       builder.addFeedLine(3);
