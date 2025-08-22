@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Minus, Plus, Trash2, Printer } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { useWebBluetoothPrinter } from '@/hooks/useWebBluetoothPrinter';
+import { PrinterOptions } from './PrinterOptions';
 
 interface OrderSummaryProps {
   order: Order | null;
@@ -27,17 +27,6 @@ export function OrderSummary({
   discountApplied = false,
   onToggleDiscount
 }: OrderSummaryProps) {
-  const { connectAndPrint, isConnecting, isConnected } = useWebBluetoothPrinter();
-
-  const handlePrintTicket = async () => {
-    if (!order) return;
-    
-    try {
-      await connectAndPrint(order, isTakeaway, discountApplied);
-    } catch (error) {
-      console.error('Print failed:', error);
-    }
-  };
   if (!order) {
     return (
       <Card className="h-full">
@@ -147,33 +136,30 @@ export function OrderSummary({
           </div>
         )}
 
-        <div className="space-y-3 mt-6">
+        {/* Print Options */}
+        <div className="mt-6">
+          <PrinterOptions 
+            order={order}
+            isTakeaway={isTakeaway}
+            discountApplied={discountApplied}
+          />
+        </div>
+
+        <div className="flex gap-2 mt-4">
           <Button 
-            onClick={handlePrintTicket}
-            variant="outline"
-            className="w-full flex items-center gap-2"
-            disabled={order.items.length === 0 || isConnecting}
+            variant="outline" 
+            onClick={onCancelOrder}
+            className="flex-1"
           >
-            <Printer className="h-4 w-4" />
-            {isConnecting ? 'Verbinding maken...' : isConnected ? 'Print Ticket' : 'Verbind & Print Ticket'}
+            Annuleer Bestelling
           </Button>
-          
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              onClick={onCancelOrder}
-              className="flex-1"
-            >
-              Annuleer Bestelling
-            </Button>
-            <Button 
-              onClick={onCompleteOrder}
-              className="flex-1"
-              disabled={order.items.length === 0}
-            >
-              Voltooi Bestelling
-            </Button>
-          </div>
+          <Button 
+            onClick={onCompleteOrder}
+            className="flex-1"
+            disabled={order.items.length === 0}
+          >
+            Voltooi Bestelling
+          </Button>
         </div>
       </CardContent>
     </Card>
