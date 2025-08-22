@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Minus, Plus, Trash2, Printer, Copy } from 'lucide-react';
+import { Minus, Plus, Trash2, Printer, Copy, Wifi } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useEpsonPrinter } from '@/hooks/useEpsonPrinter';
 import { useToast } from '@/hooks/use-toast';
@@ -31,6 +31,7 @@ export function OrderSummary({
   onToggleDiscount
 }: OrderSummaryProps) {
   const { toast } = useToast();
+  const [manualIP, setManualIP] = useState('192.168.1.100');
   const { 
     isSDKReady, 
     isConnecting, 
@@ -242,20 +243,32 @@ export function OrderSummary({
                   🖨️ Epson TM-m30III Printing Options:
                 </div>
                 
-                <Button 
-                  onClick={() => handleConnect('192.168.1.100')}
-                  disabled={isConnecting}
-                  className="w-full"
-                >
-                  {isConnecting ? 'Connecting...' : '🔌 Connect to Your TM-m30III (MAC: A4:D7:3C:AC:55:65)'}
-                </Button>
+                <div className="space-y-2">
+                  <div className="text-xs text-muted-foreground">Enter printer IP address:</div>
+                  <div className="flex gap-2">
+                    <Input 
+                      value={manualIP}
+                      onChange={(e) => setManualIP(e.target.value)}
+                      placeholder="192.168.1.100"
+                      className="flex-1"
+                    />
+                    <Button 
+                      onClick={() => handleConnect(manualIP)}
+                      disabled={isConnecting || !manualIP}
+                      className="shrink-0"
+                    >
+                      <Wifi className="h-4 w-4 mr-1" />
+                      {isConnecting ? 'Connecting...' : 'Connect'}
+                    </Button>
+                  </div>
+                </div>
                 
                 <Button 
                   onClick={discoverPrinters}
                   variant="outline"
                   className="w-full"
                 >
-                  🔍 Find Printers
+                  🔍 Find Printers on Network
                 </Button>
                 
                 {discoveredPrinters.length > 0 && (
