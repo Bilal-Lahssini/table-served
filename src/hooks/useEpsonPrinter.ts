@@ -142,70 +142,159 @@ export function useEpsonPrinter(): EpsonPrinterHook {
   }, []);
 
   const printTicket = useCallback(async (order: Order, isTakeaway = false, discountApplied = false): Promise<void> => {
-    if (!isSDKReady || !window.ePosPrint || !window.ePosDev) {
+    if (!isSDKReady) {
       toast({
         title: "SDK Niet Geladen",
-        description: "Epson ePOS SDK wordt geladen... Probeer opnieuw over een paar seconden.",
+        description: "Printer SDK wordt geladen... Probeer opnieuw.",
         variant: "destructive",
       });
       return;
     }
 
     try {
-      console.log('🖨️ Attempting to print to:', `${printerConfig.ipAddress}:${printerConfig.port}`);
+      console.log('🖨️ Preparing receipt for:', `${printerConfig.ipAddress}:${printerConfig.port}`);
       
       const receiptData = formatReceipt(order, isTakeaway, discountApplied);
       
-      // Create device and printer objects
-      const device = new window.ePosDev();
-      const printer = new window.ePosPrint();
+      // Web browsers cannot directly connect to printer TCP sockets
+      // Provide alternative printing methods
       
-      // Add receipt content
-      printer.addText(receiptData);
-      printer.addCut(printer.CUT_FEED);
-      
-      // Connect and print
-      device.connect(printerConfig.ipAddress, printerConfig.port, (data: any) => {
-        if (data === 'OK' || data === 'SSL_CONNECT_OK') {
-          console.log('✅ Connected to printer');
-          setIsConnected(true);
-          
-          device.send(printer, 60000, (result: any) => {
-            if (result.success) {
-              console.log('✅ Print successful');
-              toast({
-                title: "Print Succesvol",
-                description: "Ticket is afgedrukt",
-              });
-            } else {
-              console.error('❌ Print failed:', result);
-              toast({
-                title: "Print Fout",
-                description: `Print mislukt: ${result.code || 'Onbekende fout'}`,
-                variant: "destructive",
-              });
-            }
-            
-            device.disconnect();
-            setIsConnected(false);
-          });
-        } else {
-          console.error('❌ Connection failed:', data);
-          setIsConnected(false);
-          toast({
-            title: "Verbinding Mislukt",
-            description: "Printer not reachable, check Wi-Fi or printer status.",
-            variant: "destructive",
-          });
-        }
+      toast({
+        title: "Web Browser Beperkingen",
+        description: "Directe printer verbinding niet mogelijk. Alternatieve opties worden getoond.",
+        duration: 5000,
       });
+      
+      // Create a printable receipt window
+      const printWindow = window.open('', '_blank', 'width=400,height=600');
+      if (printWindow) {
+        const cleanReceiptData = receiptData
+          .replace(/\x1B\x61\x01/g, '') // Remove center alignment
+          .replace(/\x1B\x61\x00/g, '') // Remove left alignment  
+          .replace(/\x1B\x45\x01/g, '') // Remove bold on
+          .replace(/\x1B\x45\x00/g, '') // Remove bold off
+          .replace(/\x1B\[[0-9;]*[mGKH]/g, ''); // Remove any other escape sequences
+          
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="UTF-8">
+              <title>Receipt - ${order.id.substring(0, 8)}</title>
+              <style>
+                body { 
+                  font-family: 'Courier New', monospace; 
+                  font-size: 12px; 
+                  margin: 20px; 
+                  line-height: 1.2;
+                }
+                .receipt { 
+                  max-width: 300px; 
+                  margin: 0 auto; 
+                  border: 1px solid #ccc;
+                  padding: 10px;
+                  background: white;
+                }
+                .center { text-align: center; }
+                .bold { font-weight: bold; }
+                .actions {
+                  margin: 20px 0;
+                  text-align: center;
+                }
+                .btn {
+                  background: #007bff;
+                  color: white;
+                  border: none;
+                  padding: 12px 20px;
+                  margin: 5px;
+                  border-radius: 4px;
+                  cursor: pointer;
+                  font-size: 14px;
+                }
+                .btn:hover {
+                  background: #0056b3;
+                }
+                .info {
+                  background: #f8f9fa;
+                  border: 1px solid #dee2e6;
+                  border-radius: 4px;
+                  padding: 10px;
+                  margin: 10px 0;
+                  font-size: 11px;
+                }
+                @media print {
+                  .actions, .info { display: none; }
+                  .receipt { border: none; box-shadow: none; }
+                }
+              </style>
+            </head>
+            <body>
+              <div class="receipt">
+                <pre>${cleanReceiptData}</pre>
+              </div>
+              
+              <div class="actions">
+                <button class="btn" onclick="window.print()">
+                  🖨️ Print via Browser
+                </button>
+                <button class="btn" onclick="copyToClipboard()">
+                  📋 Copy Receipt
+                </button>
+                <button class="btn" onclick="openPrinterInterface()">
+                  🌐 Printer Web Interface
+                </button>
+              </div>
+              
+              <div class="info">
+                <strong>Print Opties:</strong><br>
+                • <strong>Print via Browser:</strong> Gebruik je browser's print functie<br>
+                • <strong>Copy Receipt:</strong> Kopieer naar klembord voor printer app<br>
+                • <strong>Printer Web Interface:</strong> Open printer's web interface (als beschikbaar)<br><br>
+                <strong>Printer IP:</strong> ${printerConfig.ipAddress}:${printerConfig.port}
+              </div>
+              
+              <script>
+                function copyToClipboard() {
+                  const text = \`${cleanReceiptData}\`;
+                  navigator.clipboard.writeText(text).then(() => {
+                    alert('Receipt gekopieerd naar klembord!');
+                  }).catch(() => {
+                    // Fallback for older browsers
+                    const textArea = document.createElement('textarea');
+                    textArea.value = text;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    alert('Receipt gekopieerd naar klembord!');
+                  });
+                }
+                
+                function openPrinterInterface() {
+                  const printerUrl = 'http://${printerConfig.ipAddress}';
+                  window.open(printerUrl, '_blank');
+                }
+              </script>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+        
+        // Focus the new window
+        printWindow.focus();
+        
+        toast({
+          title: "Receipt Gereed",
+          description: "Receipt geopend in nieuw venster. Kies je print methode.",
+          duration: 3000,
+        });
+      }
 
     } catch (error) {
-      console.error('❌ Print error:', error);
-      setIsConnected(false);
+      console.error('❌ Print preparation error:', error);
       toast({
         title: "Print Fout",
-        description: "Printer not reachable, check Wi-Fi or printer status.",
+        description: "Kon receipt niet voorbereiden.",
         variant: "destructive",
       });
     }

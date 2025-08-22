@@ -8,30 +8,20 @@
 
   <body>
     <div id="root"></div>
-    <!-- Epson ePOS SDK - Official URLs -->
-    <script src="https://www.epson-biz.com/modules/pos/epos-print.js" 
-            onload="console.log('✅ Real ePOS-Print loaded')" 
-            onerror="console.error('❌ Failed to load ePOS-Print')"></script>
-    <script src="https://www.epson-biz.com/modules/pos/epos-device.js" 
-            onload="console.log('✅ Real ePOS-Device loaded')" 
-            onerror="console.error('❌ Failed to load ePOS-Device')"></script>
+    <!-- Local Epson SDK - No external dependencies -->
+    <script src="/epson-sdk-local.js"></script>
     
-    <!-- Verify real SDK availability -->
+    <!-- Web-based printing solution -->
     <script>
       window.addEventListener('load', function() {
-        setTimeout(function() {
-          console.log('🔍 Checking REAL Epson SDK availability...');
-          console.log('ePosPrint available:', !!window.ePosPrint);
-          console.log('ePosDev available:', !!window.ePosDev);
-          
-          if (window.ePosPrint && window.ePosDev) {
-            console.log('✅ REAL Epson ePOS SDK fully loaded');
-            window.epsonSDKReady = true;
-          } else {
-            console.error('❌ REAL Epson ePOS SDK not loaded - printer will not work');
-            window.epsonSDKReady = false;
-          }
-        }, 500);
+        console.log('🔍 Checking local Epson SDK...');
+        console.log('ePosPrint available:', !!window.ePosPrint);
+        console.log('ePosDev available:', !!window.ePosDev);
+        
+        if (window.ePosPrint && window.ePosDev) {
+          console.log('✅ Local Epson SDK ready');
+          window.epsonSDKReady = true;
+        }
       });
     </script>
     
