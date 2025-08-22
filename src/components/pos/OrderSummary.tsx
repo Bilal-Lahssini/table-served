@@ -15,8 +15,11 @@ interface OrderSummaryProps {
   onCompleteOrder: () => void;
   onCancelOrder: () => void;
   isTakeaway?: boolean;
+  isDelivery?: boolean;
   discountApplied?: boolean;
   onToggleDiscount?: () => void;
+  deliveryAddress?: string;
+  onDeliveryAddressChange?: (address: string) => void;
 }
 
 export function OrderSummary({ 
@@ -26,8 +29,11 @@ export function OrderSummary({
   onCompleteOrder, 
   onCancelOrder,
   isTakeaway = false,
+  isDelivery = false,
   discountApplied = false,
-  onToggleDiscount
+  onToggleDiscount,
+  deliveryAddress = '',
+  onDeliveryAddressChange
 }: OrderSummaryProps) {
   const { toast } = useToast();
   
@@ -61,7 +67,16 @@ export function OrderSummary({
     receipt += "PEPE'S RESTAURANT\n";
     receipt += '================================\n';
     receipt += `Datum: ${date} Tijd: ${time}\n`;
-    receipt += `Bestelling: ${isTakeaway ? 'AFHAAL' : `TAFEL ${order.tableId}`}\n`;
+    
+    if (isDelivery) {
+      receipt += `Bestelling: LEVERING\n`;
+      if (deliveryAddress.trim()) {
+        receipt += `**ADRES: ${deliveryAddress.trim()}**\n`;
+      }
+    } else {
+      receipt += `Bestelling: ${isTakeaway ? 'AFHAAL' : `TAFEL ${order.tableId}`}\n`;
+    }
+    
     receipt += `Order ID: ${order.id.substring(0, 8)}\n`;
     receipt += '--------------------------------\n';
     receipt += '\n';
@@ -78,7 +93,7 @@ export function OrderSummary({
     // Totals
     receipt += '--------------------------------\n';
     
-    if (isTakeaway && discountApplied) {
+    if ((isTakeaway || isDelivery) && discountApplied) {
       receipt += `Subtotaal: €${subtotal.toFixed(2)}\n`;
       receipt += `15% Korting: -€${discountAmount.toFixed(2)}\n`;
       receipt += '--------------------------------\n';
@@ -132,14 +147,18 @@ export function OrderSummary({
     sum + (item.menuItem.price * item.quantity), 0
   );
   
-  const discountAmount = isTakeaway && discountApplied ? subtotal * 0.15 : 0;
+  const discountAmount = (isTakeaway || isDelivery) && discountApplied ? subtotal * 0.15 : 0;
   const total = subtotal - discountAmount;
 
   return (
     <Card className="h-full flex flex-col">
       <CardHeader>
         <div className="flex justify-between items-center">
-          <CardTitle>{isTakeaway ? 'Afhaal Bestelling' : `Tafel ${order.tableId} Bestelling`}</CardTitle>
+          <CardTitle>
+            {isDelivery ? 'Levering Bestelling' : 
+             isTakeaway ? 'Afhaal Bestelling' : 
+             `Tafel ${order.tableId} Bestelling`}
+          </CardTitle>
           <Badge variant="secondary">
             {order.status === 'active' ? 'Actief' : order.status === 'completed' ? 'Voltooid' : 'Geannuleerd'}
           </Badge>
@@ -147,6 +166,22 @@ export function OrderSummary({
       </CardHeader>
       
       <CardContent className="flex-1 flex flex-col">
+        {/* Delivery Address Input */}
+        {isDelivery && onDeliveryAddressChange && (
+          <div className="mb-4 p-4 bg-muted/50 rounded-lg">
+            <label htmlFor="delivery-address" className="text-sm font-medium block mb-2">
+              Leveradres *
+            </label>
+            <Input
+              id="delivery-address"
+              placeholder="Voer het leveradres in..."
+              value={deliveryAddress}
+              onChange={(e) => onDeliveryAddressChange(e.target.value)}
+              className="w-full"
+            />
+          </div>
+        )}
+
         <div className="flex-1 space-y-4 mb-6">
           {order.items.map((orderItem) => (
             <div key={orderItem.menuItem.id} className="flex items-center justify-between p-3 border rounded-lg">
@@ -192,7 +227,7 @@ export function OrderSummary({
 
         <div className="space-y-2">
           <Separator />
-          {isTakeaway && discountApplied && (
+          {(isTakeaway || isDelivery) && discountApplied && (
             <>
               <div className="flex justify-between text-sm text-muted-foreground">
                 <span>Subtotaal:</span>
@@ -210,7 +245,7 @@ export function OrderSummary({
           </div>
         </div>
 
-        {isTakeaway && onToggleDiscount && (
+        {(isTakeaway || isDelivery) && onToggleDiscount && (
           <div className="mt-4">
             <Button 
               variant={discountApplied ? "default" : "outline"}
@@ -244,7 +279,7 @@ export function OrderSummary({
           <Button 
             onClick={onCompleteOrder}
             className="flex-1"
-            disabled={order.items.length === 0}
+            disabled={order.items.length === 0 || (isDelivery && !deliveryAddress.trim())}
           >
             Voltooi Bestelling
           </Button>

@@ -20,13 +20,15 @@ export default function POS() {
     selectedTable,
     currentOrder,
     discountApplied,
+    deliveryAddress,
     selectTable,
     addItemToOrder,
     updateItemQuantity,
     removeItemFromOrder,
     completeOrder,
     cancelOrder,
-    toggleDiscount
+    toggleDiscount,
+    setDeliveryAddress
   } = usePOSStore();
 
   const handleBackToTables = () => {
@@ -107,7 +109,9 @@ export default function POS() {
                 </Button>
                 <div>
                   <h2 className="text-2xl font-bold">
-                    {selectedTable.id === 999 ? 'Afhaal Bestelling' : `Tafel ${selectedTable.id}`}
+                    {selectedTable.id === 999 ? 'Afhaal Bestelling' : 
+                     selectedTable.id === 998 ? 'Levering Bestelling' : 
+                     `Tafel ${selectedTable.id}`}
                   </h2>
                   <p className="text-muted-foreground">{selectedTable.name}</p>
                 </div>
@@ -140,8 +144,11 @@ export default function POS() {
                     onCompleteOrder={completeOrder}
                     onCancelOrder={cancelOrder}
                     isTakeaway={selectedTable?.id === 999}
+                    isDelivery={selectedTable?.id === 998}
                     discountApplied={discountApplied}
                     onToggleDiscount={toggleDiscount}
+                    deliveryAddress={deliveryAddress}
+                    onDeliveryAddressChange={setDeliveryAddress}
                   />
                 </div>
               ) : (

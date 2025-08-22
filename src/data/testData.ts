@@ -1387,7 +1387,8 @@ export const initialTables: Table[] = [
   { id: 4, name: 'Tafel 4', status: 'available' },
   { id: 5, name: 'Tafel 5', status: 'available' },
   { id: 6, name: 'Tafel 6', status: 'available' },
-  { id: 999, name: 'Afhaal', status: 'available' }
+  { id: 999, name: 'Afhaal', status: 'available' },
+  { id: 998, name: 'Levering', status: 'available' }
 ];
 
 export const menuCategories: { id: MenuCategory; name: string; icon: string }[] = [
