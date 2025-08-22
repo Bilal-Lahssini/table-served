@@ -279,20 +279,32 @@ export function useEpsonPrinter(): EpsonPrinterHook {
       const receiptData = formatReceipt(order, isTakeaway, discountApplied);
       
       // Create TM Utility compatible QR data with ESC/POS commands
-      // TM Utility expects raw ESC/POS commands in the QR code
-      let tmUtilityData = '';
+      // Convert ESC/POS commands to proper binary array first
+      const binaryArray: number[] = [];
       
       // Add printer initialization
-      tmUtilityData += '\x1B\x40'; // Initialize printer
+      binaryArray.push(0x1B, 0x40); // Initialize printer
       
-      // Add the formatted receipt data with all ESC/POS commands
-      tmUtilityData += receiptData;
+      // Convert receipt string to binary, handling ESC/POS sequences
+      for (let i = 0; i < receiptData.length; i++) {
+        const char = receiptData.charCodeAt(i);
+        if (char <= 255) {
+          binaryArray.push(char);
+        } else {
+          // Handle UTF-8 characters by converting to bytes
+          const utf8Bytes = new TextEncoder().encode(receiptData.charAt(i));
+          for (const byte of utf8Bytes) {
+            binaryArray.push(byte);
+          }
+        }
+      }
       
       // Add cut command at the end
-      tmUtilityData += '\x1D\x56\x00'; // Cut paper (full cut)
+      binaryArray.push(0x1D, 0x56, 0x00); // Cut paper (full cut)
       
-      // For TM Utility, we need to base64 encode the ESC/POS commands
-      const qrData = btoa(tmUtilityData);
+      // Convert binary array to base64 for TM Utility
+      const binaryString = String.fromCharCode(...binaryArray);
+      const qrData = btoa(binaryString);
       
       // Generate QR code as data URL
       const qrCodeDataUrl = await QRCode.toDataURL(qrData, {
