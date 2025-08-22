@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Minus, Plus, Trash2, Printer } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { useEpsonWiFiPrinter } from '@/hooks/useEpsonWiFiPrinter';
+import { usePrinterService } from '@/hooks/usePrinterService';
 
 interface OrderSummaryProps {
   order: Order | null;
@@ -27,17 +27,31 @@ export function OrderSummary({
   discountApplied = false,
   onToggleDiscount
 }: OrderSummaryProps) {
-  const { connectAndPrint, isConnecting, isConnected, isDiscovering } = useEpsonWiFiPrinter();
+  const { 
+    printOrder, 
+    isConnecting, 
+    isConnected, 
+    isDiscovering, 
+    connectedPrinter,
+    discoverPrinters
+  } = usePrinterService();
 
   const handlePrintTicket = async () => {
     if (!order) return;
     
     try {
-      await connectAndPrint(order, isTakeaway, discountApplied);
+      await printOrder(order, isTakeaway, discountApplied);
     } catch (error) {
       console.error('Print failed:', error);
+      // Try to rediscover printers
+      try {
+        await discoverPrinters();
+      } catch (discoveryError) {
+        console.error('Rediscovery failed:', discoveryError);
+      }
     }
   };
+
   if (!order) {
     return (
       <Card className="h-full">
@@ -59,6 +73,13 @@ export function OrderSummary({
   
   const discountAmount = isTakeaway && discountApplied ? subtotal * 0.15 : 0;
   const total = subtotal - discountAmount;
+
+  const getPrintButtonText = () => {
+    if (isDiscovering) return 'EpsonAC5565 zoeken...';
+    if (isConnecting) return 'Verbinden...';
+    if (isConnected && connectedPrinter) return `Print via ${connectedPrinter.name}`;
+    return 'Zoek EpsonAC5565';
+  };
 
   return (
     <Card className="h-full flex flex-col">
@@ -155,7 +176,7 @@ export function OrderSummary({
             disabled={order.items.length === 0 || isConnecting || isDiscovering}
           >
             <Printer className="h-4 w-4" />
-            {isDiscovering ? 'Printer zoeken...' : isConnecting ? 'Verbinding maken...' : isConnected ? 'Print Ticket' : 'Zoek & Print'}
+            {getPrintButtonText()}
           </Button>
           
           <div className="flex gap-2">
