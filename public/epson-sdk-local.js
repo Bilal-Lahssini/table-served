@@ -593,14 +593,31 @@
       console.log('🔍 Starting printer discovery...');
       
       // Simulate discovery of common printer IPs
+      // Try common IP ranges for your specific printer
+      const commonIPs = ['192.168.1.100', '192.168.0.100', '192.168.1.156', '192.168.0.156'];
+      
+      commonIPs.forEach((ip, index) => {
+        setTimeout(() => {
+          if (this.onreceive) {
+            this.onreceive({
+              deviceType: 'type_printer',
+              deviceId: ip,
+              printerName: 'TM-m30III',
+              ipAddress: ip,
+              macAddress: 'A4:D7:3C:AC:55:65'
+            });
+          }
+        }, 1000 + (index * 500));
+      });
+      
       setTimeout(() => {
         if (this.onreceive) {
           this.onreceive({
             deviceType: 'type_printer',
             deviceId: '192.168.1.100',
-            printerName: 'TM-T88V',
+            printerName: 'TM-m30III',
             ipAddress: '192.168.1.100',
-            macAddress: '00:11:22:33:44:55'
+            macAddress: 'A4:D7:3C:AC:55:65'
           });
         }
       }, 1000);

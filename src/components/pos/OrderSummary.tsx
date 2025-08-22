@@ -178,11 +178,11 @@ export function OrderSummary({
                 </div>
                 
                 <Button 
-                  onClick={() => handleConnect('192.168.0.156')}
+                  onClick={() => handleConnect('192.168.1.100')}
                   disabled={isConnecting}
                   className="w-full"
                 >
-                  {isConnecting ? 'Connecting...' : '🔌 Connect to TM-m30III (192.168.0.156)'}
+                  {isConnecting ? 'Connecting...' : '🔌 Connect to Your TM-m30III (MAC: A4:D7:3C:AC:55:65)'}
                 </Button>
                 
                 <Button 
