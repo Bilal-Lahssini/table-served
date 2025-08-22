@@ -274,34 +274,25 @@ export function useEpsonPrinter(): EpsonPrinterHook {
 
   const generateOrderQR = useCallback(async (order: Order, isTakeaway = false, discountApplied = false): Promise<void> => {
     try {
-      console.log('📱 Generating order QR code...');
+      console.log('📱 Generating TM Utility compatible QR code...');
       
       const receiptData = formatReceipt(order, isTakeaway, discountApplied);
       
-      // Create order data structure for QR code
-      const orderData = {
-        type: 'POS_ORDER',
-        orderId: order.id,
-        tableId: order.tableId,
-        isTakeaway,
-        discountApplied,
-        items: order.items.map(item => ({
-          name: item.menuItem.name,
-          price: item.menuItem.price,
-          quantity: item.quantity,
-          notes: item.notes
-        })),
-        total: order.items.reduce((sum, item) => {
-          const subtotal = sum + (item.menuItem.price * item.quantity);
-          const discountAmount = isTakeaway && discountApplied ? subtotal * 0.15 : 0;
-          return subtotal - discountAmount;
-        }, 0),
-        timestamp: new Date().toISOString(),
-        receiptText: receiptData
-      };
+      // Create TM Utility compatible QR data with ESC/POS commands
+      // TM Utility expects raw ESC/POS commands in the QR code
+      let tmUtilityData = '';
       
-      // Convert to JSON string for QR code
-      const qrData = JSON.stringify(orderData);
+      // Add printer initialization
+      tmUtilityData += '\x1B\x40'; // Initialize printer
+      
+      // Add the formatted receipt data with all ESC/POS commands
+      tmUtilityData += receiptData;
+      
+      // Add cut command at the end
+      tmUtilityData += '\x1D\x56\x00'; // Cut paper (full cut)
+      
+      // For TM Utility, we need to base64 encode the ESC/POS commands
+      const qrData = btoa(tmUtilityData);
       
       // Generate QR code as data URL
       const qrCodeDataUrl = await QRCode.toDataURL(qrData, {
@@ -418,39 +409,43 @@ export function useEpsonPrinter(): EpsonPrinterHook {
               <div class="container">
                 <h1>📱 Order QR Code</h1>
                 
-                <div class="order-info">
-                  <h2>Order #${order.id.substring(0, 8)}</h2>
-                  <div>${isTakeaway ? '🥡 Afhaal Bestelling' : '🪑 Tafel ' + order.tableId}</div>
-                  <div>📦 ${order.items.length} items - €${orderData.total.toFixed(2)}</div>
-                  ${discountApplied ? '<div>🏷️ 15% Korting Toegepast</div>' : ''}
-                </div>
-                
-                <img src="${qrCodeDataUrl}" alt="Order QR Code" class="qr-code" />
-                
-                <div class="instructions">
-                  <h3>🎯 Demonstratie QR Code</h3>
-                  <div class="steps">
-                    <div class="step">
-                      <div class="step-number">1</div>
-                      <div>Deze QR code bevat alle order informatie</div>
-                    </div>
-                    <div class="step">
-                      <div class="step-number">2</div>
-                      <div>Scan met je telefoon camera of QR scanner app</div>
-                    </div>
-                    <div class="step">
-                      <div class="step-number">3</div>
-                      <div>Perfect voor demonstraties en order tracking</div>
-                    </div>
-                    <div class="step">
-                      <div class="step-number">4</div>
-                      <div>Kan geintegreerd worden met externe systemen</div>
-                    </div>
-                  </div>
-                  
-                  <div class="demo-note">
-                    💡 <strong>Demo Tip:</strong> Deze QR code kan gescand worden door elke QR scanner en toont alle order details. Perfect voor demonstraties aan klanten!
-                  </div>
+                 <div class="order-info">
+                   <h2>Order #${order.id.substring(0, 8)}</h2>
+                   <div>${isTakeaway ? '🥡 Afhaal Bestelling' : '🪑 Tafel ' + order.tableId}</div>
+                   <div>📦 ${order.items.length} items - €${(order.items.reduce((sum, item) => {
+                     const subtotal = sum + (item.menuItem.price * item.quantity);
+                     const discountAmount = isTakeaway && discountApplied ? subtotal * 0.15 : 0;
+                     return subtotal - discountAmount;
+                   }, 0)).toFixed(2)}</div>
+                   ${discountApplied ? '<div>🏷️ 15% Korting Toegepast</div>' : ''}
+                 </div>
+                 
+                 <img src="${qrCodeDataUrl}" alt="Order QR Code" class="qr-code" />
+                 
+                 <div class="instructions">
+                   <h3>🖨️ TM Utility Compatible QR Code</h3>
+                   <div class="steps">
+                     <div class="step">
+                       <div class="step-number">1</div>
+                       <div>Open de TM Utility app op je telefoon</div>
+                     </div>
+                     <div class="step">
+                       <div class="step-number">2</div>
+                       <div>Scan deze QR code met de TM Utility app</div>
+                     </div>
+                     <div class="step">
+                       <div class="step-number">3</div>
+                       <div>Selecteer je Epson printer in de app</div>
+                     </div>
+                     <div class="step">
+                       <div class="step-number">4</div>
+                       <div>De bonnetje wordt direct naar de printer gestuurd</div>
+                     </div>
+                   </div>
+                   
+                   <div class="demo-note">
+                     🖨️ <strong>TM Utility:</strong> Deze QR code bevat ESC/POS printer commando's die de TM Utility app direct kan verwerken en naar de printer sturen!
+                   </div>
                 </div>
               </div>
             </body>
