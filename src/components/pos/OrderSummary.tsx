@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Minus, Plus, Trash2, Printer, QrCode } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useEpsonPrinter } from '@/hooks/useEpsonPrinter';
-import { useTCPPrinter } from '@/hooks/useTCPPrinter';
 import { useToast } from '@/hooks/use-toast';
 
 interface OrderSummaryProps {
@@ -32,30 +31,13 @@ export function OrderSummary({
   onToggleDiscount
 }: OrderSummaryProps) {
   const { toast } = useToast();
-  const { isSDKReady, printTicket, generateOrderQR } = useEpsonPrinter();
-  const { isConnecting, printViaESCPOS } = useTCPPrinter();
+  const { generateOrderQR } = useEpsonPrinter();
   
-  const handlePrintTicket = async () => {
-    try {
-      await printTicket(order, isTakeaway, discountApplied);
-    } catch (error) {
-      console.error('Print error:', error);
-    }
-  };
-
   const handleGenerateQR = async () => {
     try {
       await generateOrderQR(order, isTakeaway, discountApplied);
     } catch (error) {
       console.error('QR generation error:', error);
-    }
-  };
-
-  const handleTCPPrint = async () => {
-    try {
-      await printViaESCPOS(order, isTakeaway, discountApplied);
-    } catch (error) {
-      console.error('TCP print error:', error);
     }
   };
 
@@ -171,28 +153,8 @@ export function OrderSummary({
         {/* Print Options */}
         <div className="mt-6 space-y-2">
           <Button 
-            onClick={handlePrintTicket}
-            disabled={order.items.length === 0}
-            className="w-full flex items-center gap-2"
-          >
-            <Printer className="h-4 w-4" />
-            Print Receipt
-          </Button>
-          
-          <Button 
-            onClick={handleTCPPrint}
-            disabled={order.items.length === 0 || isConnecting}
-            variant="secondary"
-            className="w-full flex items-center gap-2"
-          >
-            <Printer className="h-4 w-4" />
-            {isConnecting ? 'Printing...' : 'ESC/POS TCP Print'}
-          </Button>
-          
-          <Button 
             onClick={handleGenerateQR}
             disabled={order.items.length === 0}
-            variant="outline"
             className="w-full flex items-center gap-2"
           >
             <QrCode className="h-4 w-4" />
