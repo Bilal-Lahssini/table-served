@@ -202,32 +202,65 @@
     
     // Send print data
     send: function(builder, timeout, statusback, printjobid) {
-      console.log('📤 Sending print job...');
+      console.log('📤 Sending print job to connected printer...');
       
       const printData = builder.toString();
-      console.log('Print data:', printData);
+      console.log('Print data length:', printData.length);
       
-      // For web browsers, we'll use a different approach
-      // Try to use the Web Serial API or fall back to QR code
-      setTimeout(() => {
-        if ('serial' in navigator) {
-          // Web Serial API available
-          this._sendViaWebSerial(printData, statusback);
-        } else {
-          // Fall back to alternative method
-          console.log('📱 Web Serial not available, using alternative method');
-          if (statusback) {
-            statusback({
+      // Try to send via fetch to our edge function
+      this._sendViaTCPProxy(printData, statusback);
+    },
+    
+    // Send via TCP proxy (using our edge function)
+    _sendViaTCPProxy: async function(data, callback) {
+      try {
+        console.log('🖨️ Sending via TCP proxy to:', this.deviceId);
+        
+        const [ipAddress] = this.deviceId.split(':');
+        
+        const response = await fetch('/functions/v1/epos-print', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            printerIP: ipAddress,
+            printData: data
+          }),
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          console.log('✅ Print job sent successfully');
+          if (callback) {
+            callback({
               success: true,
               code: 'SUCCESS',
               battery: 6
             });
           }
-          
-          // Show print preview
-          this._showPrintPreview(printData);
+        } else {
+          console.error('❌ Print failed:', result.error);
+          if (callback) {
+            callback({
+              success: false,
+              code: 'FAIL_NO_RESPONSE',
+              message: result.message
+            });
+          }
         }
-      }, 500);
+        
+      } catch (error) {
+        console.error('❌ TCP proxy error:', error);
+        if (callback) {
+          callback({
+            success: false,
+            code: 'FAIL_CONNECT',
+            message: 'Could not reach print server'
+          });
+        }
+      }
     },
     
     // Web Serial implementation

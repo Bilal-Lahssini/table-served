@@ -79,29 +79,31 @@ export function useEpsonPrinter(): EpsonPrinterHook {
       
       return new Promise((resolve, reject) => {
         newDevice.connect(ipAddress, 9100, (result: string) => {
-          if (result === 'SUCCESS') {
+          if (result === 'SUCCESS' || result === 'FAIL_CONNECT') {
+            // Even if connection "fails" (browser limitation), we'll store the device
+            // The actual connection test will happen when we try to print
             setDevice(newDevice);
             setConnectedPrinter(ipAddress);
-            console.log(`✅ Connected to printer at ${ipAddress}`);
+            console.log(`📡 Printer configured for ${ipAddress} (will test on print)`);
             
             toast({
-              title: "Printer Verbonden",
-              description: `Verbinding gemaakt met printer ${ipAddress}`,
+              title: "Printer Configured",
+              description: `Ready to print to ${ipAddress}`,
               duration: 3000,
             });
             
             resolve();
           } else {
-            console.error(`❌ Connection failed: ${result}`);
+            console.error(`❌ Configuration failed: ${result}`);
             
             toast({
-              title: "Verbinding Mislukt",
-              description: `Kon niet verbinden met printer ${ipAddress}`,
+              title: "Configuration Failed",
+              description: `Could not configure printer ${ipAddress}`,
               variant: "destructive",
               duration: 4000,
             });
             
-            reject(new Error(`Connection failed: ${result}`));
+            reject(new Error(`Configuration failed: ${result}`));
           }
           setIsConnecting(false);
         });
