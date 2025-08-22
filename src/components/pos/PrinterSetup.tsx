@@ -9,6 +9,7 @@ import { useEpsonPrinter } from '@/hooks/useEpsonPrinter';
 import { useMobilePrinter } from '@/hooks/useMobilePrinter';
 import { PrinterNetworkScanner } from './PrinterNetworkScanner';
 import { MobilePrinterStatus } from './MobilePrinterStatus';
+import { PrinterDiagnostics } from './PrinterDiagnostics';
 
 interface PrinterSetupProps {
   onSetupComplete?: () => void;
@@ -73,6 +74,10 @@ export function PrinterSetup({ onSetupComplete }: PrinterSetupProps) {
   return (
     <div className="space-y-4">
       <MobilePrinterStatus />
+      
+      {!isConfigured && (
+        <PrinterDiagnostics />
+      )}
       
       <Card>
         <CardHeader>

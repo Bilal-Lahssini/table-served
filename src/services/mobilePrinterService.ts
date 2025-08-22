@@ -46,17 +46,40 @@ export class MobilePrinterService {
 
     try {
       console.log(`Testing connection to printer at ${testIP}:${this.PRINTER_PORT}`);
+      console.log('Request details:', {
+        url: `http://${testIP}:${this.PRINTER_PORT}/cgi-bin/epos/service.cgi?devid=local_printer`,
+        timeout: 3000
+      });
       
       const response = await CapacitorHttp.get({
         url: `http://${testIP}:${this.PRINTER_PORT}/cgi-bin/epos/service.cgi?devid=local_printer`,
-        headers: {},
-        params: {}
+        headers: {
+          'User-Agent': 'ePOS SDK Mobile'
+        },
+        connectTimeout: 3000,
+        readTimeout: 3000
       });
 
-      console.log('Printer connection test response:', response);
-      return response.status === 200 || response.status === 404; // 404 is also OK for some printers
+      console.log('Printer connection test response:', {
+        status: response.status,
+        headers: response.headers,
+        dataType: typeof response.data,
+        dataLength: response.data ? response.data.toString().length : 0
+      });
+      
+      // Accept various status codes that indicate the printer is reachable
+      const isReachable = response.status === 200 || 
+                         response.status === 404 || 
+                         response.status === 400 ||
+                         response.status === 405; // Method not allowed is also OK
+      
+      return isReachable;
     } catch (error) {
-      console.error('Printer connection test failed:', error);
+      console.error('Printer connection test failed:', {
+        error: (error as Error).message,
+        ip: testIP,
+        port: this.PRINTER_PORT
+      });
       return false;
     }
   }
