@@ -31,13 +31,39 @@ export function OrderSummary({
   onToggleDiscount
 }: OrderSummaryProps) {
   const { toast } = useToast();
-  const { generateOrderQR } = useEpsonPrinter();
+  const { 
+    isSDKReady, 
+    isConnecting, 
+    connectedPrinter, 
+    discoveredPrinters,
+    connectToPrinter,
+    printTicket, 
+    generateOrderQR, 
+    discoverPrinters,
+    disconnect 
+  } = useEpsonPrinter();
   
+  const handlePrintTicket = async () => {
+    try {
+      await printTicket(order, isTakeaway, discountApplied);
+    } catch (error) {
+      console.error('Print error:', error);
+    }
+  };
+
   const handleGenerateQR = async () => {
     try {
       await generateOrderQR(order, isTakeaway, discountApplied);
     } catch (error) {
       console.error('QR generation error:', error);
+    }
+  };
+
+  const handleConnect = async (ipAddress: string) => {
+    try {
+      await connectToPrinter(ipAddress);
+    } catch (error) {
+      console.error('Connection error:', error);
     }
   };
 
@@ -150,11 +176,84 @@ export function OrderSummary({
           </div>
         )}
 
-        {/* Print Options */}
-        <div className="mt-6 space-y-2">
+        {/* Printer Connection */}
+        {isSDKReady && (
+          <div className="mt-6 space-y-3">
+            {!connectedPrinter ? (
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={discoverPrinters}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    🔍 Discover Printers
+                  </Button>
+                  <Button 
+                    onClick={() => handleConnect('192.168.0.156')}
+                    disabled={isConnecting}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    {isConnecting ? 'Connecting...' : 'Connect Default'}
+                  </Button>
+                </div>
+                
+                {discoveredPrinters.length > 0 && (
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">Found printers:</p>
+                    {discoveredPrinters.map((printer, idx) => (
+                      <Button
+                        key={idx}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleConnect(printer.ipAddress)}
+                        className="w-full justify-start text-left"
+                      >
+                        <Printer className="h-4 w-4 mr-2" />
+                        {printer.printerName} ({printer.ipAddress})
+                      </Button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-2 bg-green-50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Printer className="h-4 w-4 text-green-600" />
+                    <span className="text-sm text-green-700">
+                      Connected: {connectedPrinter}
+                    </span>
+                  </div>
+                  <Button
+                    onClick={disconnect}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Disconnect
+                  </Button>
+                </div>
+                
+                <Button 
+                  onClick={handlePrintTicket}
+                  disabled={order.items.length === 0}
+                  className="w-full flex items-center gap-2"
+                >
+                  <Printer className="h-4 w-4" />
+                  Print Receipt (ePOS)
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* QR Code Option */}
+        <div className="mt-4">
           <Button 
             onClick={handleGenerateQR}
             disabled={order.items.length === 0}
+            variant="outline"
             className="w-full flex items-center gap-2"
           >
             <QrCode className="h-4 w-4" />
