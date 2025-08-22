@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Order } from '@/types/pos';
 import { useToast } from '@/hooks/use-toast';
+import QRCode from 'qrcode';
 
 declare global {
   interface Window {
@@ -13,6 +14,7 @@ declare global {
 interface EpsonPrinterHook {
   isSDKReady: boolean;
   printTicket: (order: Order, isTakeaway?: boolean, discountApplied?: boolean) => Promise<void>;
+  generateOrderQR: (order: Order, isTakeaway?: boolean, discountApplied?: boolean) => Promise<void>;
 }
 
 export function useEpsonPrinter(): EpsonPrinterHook {
@@ -270,8 +272,212 @@ export function useEpsonPrinter(): EpsonPrinterHook {
     }
   }, [formatReceipt, toast]);
 
+  const generateOrderQR = useCallback(async (order: Order, isTakeaway = false, discountApplied = false): Promise<void> => {
+    try {
+      console.log('📱 Generating order QR code...');
+      
+      const receiptData = formatReceipt(order, isTakeaway, discountApplied);
+      
+      // Create order data structure for QR code
+      const orderData = {
+        type: 'POS_ORDER',
+        orderId: order.id,
+        tableId: order.tableId,
+        isTakeaway,
+        discountApplied,
+        items: order.items.map(item => ({
+          name: item.menuItem.name,
+          price: item.menuItem.price,
+          quantity: item.quantity,
+          notes: item.notes
+        })),
+        total: order.items.reduce((sum, item) => {
+          const subtotal = sum + (item.menuItem.price * item.quantity);
+          const discountAmount = isTakeaway && discountApplied ? subtotal * 0.15 : 0;
+          return subtotal - discountAmount;
+        }, 0),
+        timestamp: new Date().toISOString(),
+        receiptText: receiptData
+      };
+      
+      // Convert to JSON string for QR code
+      const qrData = JSON.stringify(orderData);
+      
+      // Generate QR code as data URL
+      const qrCodeDataUrl = await QRCode.toDataURL(qrData, {
+        width: 400,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+      
+      // Display QR code in a popup window
+      const qrWindow = window.open('', '_blank', 'width=600,height=700,scrollbars=yes,resizable=yes');
+      if (qrWindow) {
+        qrWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Order QR Code</title>
+              <style>
+                body {
+                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                  margin: 0;
+                  padding: 20px;
+                  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  justify-content: center;
+                  min-height: 100vh;
+                  color: white;
+                }
+                .container {
+                  background: white;
+                  padding: 30px;
+                  border-radius: 16px;
+                  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+                  text-align: center;
+                  max-width: 500px;
+                  color: #333;
+                }
+                .qr-code {
+                  margin: 20px 0;
+                  border: 3px solid #f0f0f0;
+                  border-radius: 12px;
+                  padding: 15px;
+                  background: white;
+                }
+                .order-info {
+                  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+                  color: white;
+                  padding: 20px;
+                  border-radius: 12px;
+                  margin-bottom: 20px;
+                  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+                }
+                .instructions {
+                  background: #f8f9fa;
+                  padding: 20px;
+                  border-radius: 12px;
+                  border-left: 4px solid #28a745;
+                  margin-top: 20px;
+                }
+                .steps {
+                  text-align: left;
+                  margin-top: 15px;
+                }
+                .step {
+                  margin: 12px 0;
+                  padding: 8px 0;
+                  border-bottom: 1px solid #eee;
+                  display: flex;
+                  align-items: center;
+                  gap: 10px;
+                }
+                .step-number {
+                  background: #28a745;
+                  color: white;
+                  width: 24px;
+                  height: 24px;
+                  border-radius: 50%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-size: 12px;
+                  font-weight: bold;
+                }
+                h1 {
+                  margin-bottom: 10px;
+                  color: #333;
+                }
+                h2 {
+                  margin-bottom: 10px;
+                  font-size: 18px;
+                }
+                h3 {
+                  color: #28a745;
+                  margin-bottom: 10px;
+                }
+                .demo-note {
+                  background: #fff3cd;
+                  border: 1px solid #ffeaa7;
+                  color: #856404;
+                  padding: 15px;
+                  border-radius: 8px;
+                  margin-top: 15px;
+                  font-size: 14px;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <h1>📱 Order QR Code</h1>
+                
+                <div class="order-info">
+                  <h2>Order #${order.id.substring(0, 8)}</h2>
+                  <div>${isTakeaway ? '🥡 Afhaal Bestelling' : '🪑 Tafel ' + order.tableId}</div>
+                  <div>📦 ${order.items.length} items - €${orderData.total.toFixed(2)}</div>
+                  ${discountApplied ? '<div>🏷️ 15% Korting Toegepast</div>' : ''}
+                </div>
+                
+                <img src="${qrCodeDataUrl}" alt="Order QR Code" class="qr-code" />
+                
+                <div class="instructions">
+                  <h3>🎯 Demonstratie QR Code</h3>
+                  <div class="steps">
+                    <div class="step">
+                      <div class="step-number">1</div>
+                      <div>Deze QR code bevat alle order informatie</div>
+                    </div>
+                    <div class="step">
+                      <div class="step-number">2</div>
+                      <div>Scan met je telefoon camera of QR scanner app</div>
+                    </div>
+                    <div class="step">
+                      <div class="step-number">3</div>
+                      <div>Perfect voor demonstraties en order tracking</div>
+                    </div>
+                    <div class="step">
+                      <div class="step-number">4</div>
+                      <div>Kan geintegreerd worden met externe systemen</div>
+                    </div>
+                  </div>
+                  
+                  <div class="demo-note">
+                    💡 <strong>Demo Tip:</strong> Deze QR code kan gescand worden door elke QR scanner en toont alle order details. Perfect voor demonstraties aan klanten!
+                  </div>
+                </div>
+              </div>
+            </body>
+          </html>
+        `);
+        qrWindow.document.close();
+        
+        toast({
+          title: "Order QR Code Gegenereerd",
+          description: "QR code bevat volledige order informatie voor demonstratie.",
+          duration: 5000,
+        });
+      }
+      
+    } catch (error) {
+      console.error('❌ QR code generation error:', error);
+      toast({
+        title: "QR Code Fout",
+        description: "Kon order QR code niet genereren.",
+        variant: "destructive",
+      });
+    }
+  }, [formatReceipt, toast]);
+
   return {
     isSDKReady,
-    printTicket
+    printTicket,
+    generateOrderQR
   };
 }
