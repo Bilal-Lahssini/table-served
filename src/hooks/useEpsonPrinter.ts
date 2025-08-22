@@ -151,6 +151,74 @@ export function useEpsonPrinter(): EpsonPrinterHook {
       return;
     }
 
+    // Check if running on mobile browser
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // For mobile browsers, try alternative printing methods
+      const receiptData = formatReceipt(order, isTakeaway, discountApplied);
+      
+      // Try to open printer's web interface
+      const printerWebUrl = `http://${printerConfig.ipAddress}/cgi-bin/epos/service.cgi`;
+      
+      try {
+        // First, try to fetch the printer's web interface to check if it's accessible
+        const response = await fetch(printerWebUrl, { 
+          method: 'GET',
+          mode: 'no-cors'
+        });
+        
+        // If we can reach the printer, show instructions for manual printing
+        toast({
+          title: "Mobiel Afdrukken",
+          description: `Open in nieuwe tab: http://${printerConfig.ipAddress} en gebruik de web interface om af te drukken.`,
+          duration: 10000,
+        });
+        
+        // Open printer web interface in new tab
+        window.open(`http://${printerConfig.ipAddress}`, '_blank');
+        
+      } catch (error) {
+        console.error('❌ Printer web interface not accessible:', error);
+        
+        // Fallback: Show receipt content for manual printing or sharing
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          printWindow.document.write(`
+            <html>
+              <head>
+                <title>Receipt - ${order.id.substring(0, 8)}</title>
+                <style>
+                  body { font-family: monospace; font-size: 12px; margin: 20px; }
+                  .receipt { max-width: 300px; margin: 0 auto; }
+                  .center { text-align: center; }
+                  .bold { font-weight: bold; }
+                </style>
+              </head>
+              <body>
+                <div class="receipt">
+                  <pre>${receiptData.replace(/\x1B\[[0-9;]*[mGKH]/g, '')}</pre>
+                  <br>
+                  <button onclick="window.print()" style="padding: 10px 20px; font-size: 16px;">
+                    🖨️ Print via Browser
+                  </button>
+                </div>
+              </body>
+            </html>
+          `);
+          printWindow.document.close();
+        }
+        
+        toast({
+          title: "Alternatief Afdrukken",
+          description: "Receipt geopend in nieuwe tab. Gebruik browser print functie of kopieer naar printer app.",
+          duration: 8000,
+        });
+      }
+      
+      return;
+    }
+
     try {
       console.log('🖨️ Attempting to print to:', `${printerConfig.ipAddress}:${printerConfig.port}`);
       
