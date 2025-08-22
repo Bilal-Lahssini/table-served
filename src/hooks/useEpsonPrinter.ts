@@ -17,6 +17,7 @@ interface PrinterConfig {
 
 interface EpsonPrinterHook {
   isConnected: boolean;
+  isSDKReady: boolean;
   printerConfig: PrinterConfig;
   setPrinterConfig: (config: PrinterConfig) => void;
   printTicket: (order: Order, isTakeaway?: boolean, discountApplied?: boolean) => Promise<void>;
@@ -24,11 +25,40 @@ interface EpsonPrinterHook {
 
 export function useEpsonPrinter(): EpsonPrinterHook {
   const [isConnected, setIsConnected] = useState(false);
+  const [isSDKReady, setIsSDKReady] = useState(false);
   const [printerConfig, setPrinterConfigState] = useState<PrinterConfig>({
     ipAddress: '192.168.1.150',
     port: 8008
   });
   const { toast } = useToast();
+
+  // Check SDK readiness
+  useEffect(() => {
+    const checkSDK = () => {
+      const ready = !!(window.ePosPrint && window.ePosDev);
+      setIsSDKReady(ready);
+      
+      if (ready) {
+        console.log('✅ Epson SDK is ready for use');
+      } else {
+        console.log('⏳ Waiting for Epson SDK to load...');
+      }
+    };
+
+    // Check immediately
+    checkSDK();
+
+    // Check periodically if not ready
+    const interval = setInterval(() => {
+      if (!isSDKReady) {
+        checkSDK();
+      } else {
+        clearInterval(interval);
+      }
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, [isSDKReady]);
 
   // Load saved printer config from localStorage
   useEffect(() => {
@@ -112,10 +142,10 @@ export function useEpsonPrinter(): EpsonPrinterHook {
   }, []);
 
   const printTicket = useCallback(async (order: Order, isTakeaway = false, discountApplied = false): Promise<void> => {
-    if (!window.ePosPrint || !window.ePosDev) {
+    if (!isSDKReady || !window.ePosPrint || !window.ePosDev) {
       toast({
         title: "SDK Niet Geladen",
-        description: "Epson ePOS SDK is niet geladen. Herlaad de pagina.",
+        description: "Epson ePOS SDK wordt geladen... Probeer opnieuw over een paar seconden.",
         variant: "destructive",
       });
       return;
@@ -179,10 +209,11 @@ export function useEpsonPrinter(): EpsonPrinterHook {
         variant: "destructive",
       });
     }
-  }, [printerConfig, formatReceipt, toast]);
+  }, [printerConfig, formatReceipt, toast, isSDKReady]);
 
   return {
     isConnected,
+    isSDKReady,
     printerConfig,
     setPrinterConfig,
     printTicket

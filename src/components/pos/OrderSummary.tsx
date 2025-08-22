@@ -31,7 +31,7 @@ export function OrderSummary({
   onToggleDiscount
 }: OrderSummaryProps) {
   const { toast } = useToast();
-  const { isConnected, printerConfig, setPrinterConfig, printTicket } = useEpsonPrinter();
+  const { isConnected, isSDKReady, printerConfig, setPrinterConfig, printTicket } = useEpsonPrinter();
   const [showSettings, setShowSettings] = useState(false);
   const [tempConfig, setTempConfig] = useState(printerConfig);
   
@@ -97,6 +97,8 @@ export function OrderSummary({
               <Badge variant="default" className="text-xs">
                 {printerConfig.ipAddress}:{printerConfig.port}
               </Badge>
+              {!isSDKReady && <Badge variant="secondary" className="text-xs">SDK Loading...</Badge>}
+              {isSDKReady && !isConnected && <Badge variant="outline" className="text-xs">SDK Ready</Badge>}
               {isConnected && <Badge variant="default" className="text-xs">Verbonden</Badge>}
               <Button 
                 onClick={() => setShowSettings(!showSettings)}
@@ -231,11 +233,11 @@ export function OrderSummary({
         <div className="mt-6">
           <Button 
             onClick={handlePrintTicket}
-            disabled={order.items.length === 0}
+            disabled={order.items.length === 0 || !isSDKReady}
             className="w-full flex items-center gap-2"
           >
             <Printer className="h-4 w-4" />
-            Print Ticket
+            {!isSDKReady ? 'SDK Loading...' : 'Print Ticket'}
           </Button>
         </div>
 

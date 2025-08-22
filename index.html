@@ -8,10 +8,37 @@
 
   <body>
     <div id="root"></div>
+    <!-- Epson ePOS SDK - Load before React app -->
+    <script src="https://www.epson-biz.com/modules/pos/epos-print-4.0.0.js" 
+            onload="console.log('✅ ePOS-Print loaded')" 
+            onerror="console.error('❌ Failed to load ePOS-Print')"></script>
+    <script src="https://www.epson-biz.com/modules/pos/epos-device-4.0.0.js" 
+            onload="console.log('✅ ePOS-Device loaded')" 
+            onerror="console.error('❌ Failed to load ePOS-Device')"></script>
+    <script src="https://www.epson-biz.com/modules/pos/discovery-4.0.0.js" 
+            onload="console.log('✅ ePOS-Discovery loaded')" 
+            onerror="console.error('❌ Failed to load ePOS-Discovery')"></script>
+    
+    <!-- Verify SDK availability -->
+    <script>
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          console.log('🔍 Checking Epson SDK availability...');
+          console.log('ePosPrint available:', !!window.ePosPrint);
+          console.log('ePosDev available:', !!window.ePosDev);
+          console.log('ePosDiscovery available:', !!window.ePosDiscovery);
+          
+          if (window.ePosPrint && window.ePosDev) {
+            console.log('✅ Epson ePOS SDK fully loaded');
+            window.epsonSDKReady = true;
+          } else {
+            console.error('❌ Epson ePOS SDK not fully loaded');
+            window.epsonSDKReady = false;
+          }
+        }, 100);
+      });
+    </script>
+    
     <script type="module" src="/src/main.tsx"></script>
-    <!-- Epson ePOS SDK for WiFi printer auto-discovery and printing -->
-    <script src="https://cdn.epson-pos.com/epos-print-4.0.0.js"></script>
-    <script src="https://cdn.epson-pos.com/epos-device-4.0.0.js"></script>  
-    <script src="https://cdn.epson-pos.com/discovery-4.0.0.js"></script>
   </body>
 </html>
