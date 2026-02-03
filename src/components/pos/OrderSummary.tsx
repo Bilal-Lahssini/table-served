@@ -10,8 +10,8 @@ import { useToast } from '@/hooks/use-toast';
 
 interface OrderSummaryProps {
   order: Order | null;
-  onUpdateQuantity: (itemId: string, quantity: number) => void;
-  onRemoveItem: (itemId: string) => void;
+  onUpdateQuantity: (itemIndex: number, quantity: number) => void;
+  onRemoveItem: (itemIndex: number) => void;
   onCompleteOrder: () => void;
   onCancelOrder: () => void;
   isTakeaway?: boolean;
@@ -84,12 +84,13 @@ export function OrderSummary({
     // Items section
     receipt += 'BESTELLING:\n';
     order.items.forEach((item) => {
-      const itemTotal = item.menuItem.price * item.quantity;
-      const itemName = item.pastaType && item.menuItem.category === 'pasta' 
-        ? `${item.menuItem.name} (${item.pastaType})`
-        : item.menuItem.name;
+      const itemPrice = item.menuItem.price + (item.sizePrice || 0);
+      const itemTotal = itemPrice * item.quantity;
+      let itemName = item.menuItem.name;
+      if (item.size) itemName += ` (${item.size})`;
+      if (item.pastaType && item.menuItem.category === 'pasta') itemName += ` - ${item.pastaType}`;
       receipt += `${item.quantity}x ${itemName}\n`;
-      receipt += `€${item.menuItem.price.toFixed(2)} x ${item.quantity} = €${itemTotal.toFixed(2)}\n`;
+      receipt += `€${itemPrice.toFixed(2)} x ${item.quantity} = €${itemTotal.toFixed(2)}\n`;
       receipt += '\n';
     });
     
@@ -147,7 +148,7 @@ export function OrderSummary({
   }
 
   const subtotal = order.items.reduce((sum, item) => 
-    sum + (item.menuItem.price * item.quantity), 0
+    sum + ((item.menuItem.price + (item.sizePrice || 0)) * item.quantity), 0
   );
   
   const discountAmount = (isTakeaway || isDelivery) && discountApplied ? subtotal * 0.15 : 0;
@@ -186,51 +187,60 @@ export function OrderSummary({
         )}
 
         <div className="flex-1 space-y-4 mb-6">
-          {order.items.map((orderItem) => (
-            <div key={orderItem.menuItem.id} className="flex items-center justify-between p-3 border rounded-lg">
-              <div className="flex-1">
-                <h4 className="font-medium">
-                  {orderItem.menuItem.name}
-                  {orderItem.pastaType && (
-                    <span className="text-sm text-muted-foreground ml-2">({orderItem.pastaType})</span>
-                  )}
-                </h4>
-                <p className="text-sm text-muted-foreground">
-                  €{orderItem.menuItem.price.toFixed(2)} per stuk
-                </p>
+          {order.items.map((orderItem, index) => {
+            const itemPrice = orderItem.menuItem.price + (orderItem.sizePrice || 0);
+            return (
+              <div key={`${orderItem.menuItem.id}-${orderItem.size || 'default'}-${orderItem.pastaType || 'default'}-${index}`} className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="flex-1">
+                  <h4 className="font-medium">
+                    {orderItem.menuItem.name}
+                    {orderItem.size && (
+                      <span className="text-sm text-muted-foreground ml-2">({orderItem.size})</span>
+                    )}
+                    {orderItem.pastaType && (
+                      <span className="text-sm text-muted-foreground ml-2">- {orderItem.pastaType}</span>
+                    )}
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    €{itemPrice.toFixed(2)} per stuk
+                    {orderItem.sizePrice && orderItem.sizePrice > 0 && (
+                      <span className="ml-1">(+€{orderItem.sizePrice.toFixed(2)} maat)</span>
+                    )}
+                  </p>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onUpdateQuantity(index, orderItem.quantity - 1)}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  
+                  <span className="w-8 text-center font-medium">
+                    {orderItem.quantity}
+                  </span>
+                  
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onUpdateQuantity(index, orderItem.quantity + 1)}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                  
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onRemoveItem(index)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-              
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => onUpdateQuantity(orderItem.menuItem.id, orderItem.quantity - 1)}
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-                
-                <span className="w-8 text-center font-medium">
-                  {orderItem.quantity}
-                </span>
-                
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => onUpdateQuantity(orderItem.menuItem.id, orderItem.quantity + 1)}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-                
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => onRemoveItem(orderItem.menuItem.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="space-y-2">
