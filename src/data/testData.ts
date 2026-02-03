@@ -222,7 +222,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-4',
   name: 'Small Pepes Roni',
   description: '',
-  price: 12.5,
+  price: 13.5,
   category: 'pizza',
   subcategory: 'Small'
 },
@@ -231,7 +231,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-5',
   name: 'Medium Pepes Roni',
   description: '',
-  price: 14.5,
+  price: 15.5,
   category: 'pizza',
   subcategory: 'Medium'
 },
@@ -240,7 +240,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-6',
   name: 'Large Pepes Roni',
   description: '',
-  price: 18.5,
+  price: 19.5,
   category: 'pizza',
   subcategory: 'Large'
 },
@@ -249,7 +249,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-7',
   name: 'Small Quattro Sangioni',
   description: '',
-  price: 12.5,
+  price: 13.5,
   category: 'pizza',
   subcategory: 'Small'
 },
@@ -258,7 +258,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-8',
   name: 'Medium Quattro Sangioni',
   description: '',
-  price: 14.5,
+  price: 15.5,
   category: 'pizza',
   subcategory: 'Medium'
 },
@@ -267,7 +267,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-9',
   name: 'Large Quattro Sangioni',
   description: '',
-  price: 18.5,
+  price: 19.5,
   category: 'pizza',
   subcategory: 'Large'
 },
@@ -276,7 +276,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-10',
   name: 'Small Funghi',
   description: '',
-  price: 12.3,
+  price: 13.5,
   category: 'pizza',
   subcategory: 'Small'
 },
@@ -285,7 +285,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-11',
   name: 'Medium Funghi',
   description: '',
-  price: 14.3,
+  price: 15.5,
   category: 'pizza',
   subcategory: 'Medium'
 },
@@ -294,7 +294,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-12',
   name: 'Large Funghi',
   description: '',
-  price: 18.5,
+  price: 19.5,
   category: 'pizza',
   subcategory: 'Large'
 },
@@ -303,7 +303,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-13',
   name: 'Small Tomatello',
   description: '',
-  price: 12.5,
+  price: 13.5,
   category: 'pizza',
   subcategory: 'Small'
 },
@@ -312,7 +312,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-14',
   name: 'Medium Tomatello',
   description: '',
-  price: 14.5,
+  price: 15.5,
   category: 'pizza',
   subcategory: 'Medium'
 },
@@ -321,7 +321,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-15',
   name: 'Large Tomatello',
   description: '',
-  price: 18.5,
+  price: 19.5,
   category: 'pizza',
   subcategory: 'Large'
 },
@@ -330,7 +330,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-16',
   name: 'Small Hawaiian Style',
   description: '',
-  price: 12.5,
+  price: 13.5,
   category: 'pizza',
   subcategory: 'Small'
 },
@@ -339,7 +339,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-17',
   name: 'Medium Hawaiian Style',
   description: '',
-  price: 14.5,
+  price: 15.5,
   category: 'pizza',
   subcategory: 'Medium'
 },
@@ -348,7 +348,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-18',
   name: 'Large Hawaiian Style',
   description: '',
-  price: 18.5,
+  price: 19.5,
   category: 'pizza',
   subcategory: 'Large'
 },
@@ -357,7 +357,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-19',
   name: 'Small Suavez',
   description: '',
-  price: 12.5,
+  price: 13.5,
   category: 'pizza',
   subcategory: 'Small'
 },
@@ -366,7 +366,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-20',
   name: 'Medium Suavez',
   description: '',
-  price: 14.5,
+  price: 15.5,
   category: 'pizza',
   subcategory: 'Medium'
 },
@@ -375,7 +375,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-21',
   name: 'Large Suavez',
   description: '',
-  price: 18.5,
+  price: 19.5,
   category: 'pizza',
   subcategory: 'Large'
 },
@@ -384,7 +384,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-22',
   name: 'Small Calzone',
   description: '',
-  price: 12.7,
+  price: 13.7,
   category: 'pizza',
   subcategory: 'Small'
 },
@@ -393,7 +393,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-23',
   name: 'Medium Calzone',
   description: '',
-  price: 14.7,
+  price: 15.7,
   category: 'pizza',
   subcategory: 'Medium'
 },
@@ -402,7 +402,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-24',
   name: 'Large Calzone',
   description: '',
-  price: 18.7,
+  price: 19.7,
   category: 'pizza',
   subcategory: 'Large'
 },
@@ -411,7 +411,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-25',
   name: 'Small Creamy Chicken Broccoli',
   description: '',
-  price: 12.5,
+  price: 13.5,
   category: 'pizza',
   subcategory: 'Small'
 },
@@ -420,7 +420,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-26',
   name: 'Medium Creamy Chicken Broccoli',
   description: '',
-  price: 14.5,
+  price: 15.5,
   category: 'pizza',
   subcategory: 'Medium'
 },
@@ -429,7 +429,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-27',
   name: 'Large Creamy Chicken Broccoli',
   description: '',
-  price: 18.5,
+  price: 19.5,
   category: 'pizza',
   subcategory: 'Large'
 },
@@ -438,7 +438,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-28',
   name: 'Small Vegetariana',
   description: '',
-  price: 12.7,
+  price: 13.7,
   category: 'pizza',
   subcategory: 'Small'
 },
@@ -447,7 +447,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-29',
   name: 'Medium Vegetariana',
   description: '',
-  price: 14.7,
+  price: 15.7,
   category: 'pizza',
   subcategory: 'Medium'
 },
@@ -456,7 +456,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-30',
   name: 'Large Vegetariana',
   description: '',
-  price: 18.7,
+  price: 19.7,
   category: 'pizza',
   subcategory: 'Large'
 },
@@ -465,7 +465,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-31',
   name: 'Small Chicken Curry',
   description: '',
-  price: 12.5,
+  price: 13.5,
   category: 'pizza',
   subcategory: 'Small'
 },
@@ -474,7 +474,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-32',
   name: 'Medium Chicken Curry',
   description: '',
-  price: 14.5,
+  price: 15.5,
   category: 'pizza',
   subcategory: 'Medium'
 },
@@ -483,7 +483,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-33',
   name: 'Large Chicken Curry',
   description: '',
-  price: 18.5,
+  price: 19.5,
   category: 'pizza',
   subcategory: 'Large'
 },
@@ -492,7 +492,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-34',
   name: 'Small Napolli',
   description: '',
-  price: 12.5,
+  price: 13.5,
   category: 'pizza',
   subcategory: 'Small'
 },
@@ -501,7 +501,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-35',
   name: 'Medium Napolli',
   description: '',
-  price: 14.5,
+  price: 15.5,
   category: 'pizza',
   subcategory: 'Medium'
 },
@@ -510,7 +510,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-36',
   name: 'Large Napolli',
   description: '',
-  price: 18.95,
+  price: 19.95,
   category: 'pizza',
   subcategory: 'Large'
 },
@@ -519,7 +519,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-37',
   name: 'Small El Samourai',
   description: '',
-  price: 12.9,
+  price: 13.9,
   category: 'pizza',
   subcategory: 'Small'
 },
@@ -528,7 +528,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-38',
   name: 'Medium El Samourai',
   description: '',
-  price: 14.9,
+  price: 15.9,
   category: 'pizza',
   subcategory: 'Medium'
 },
@@ -537,7 +537,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-39',
   name: 'Large El Samourai',
   description: '',
-  price: 18.9,
+  price: 19.9,
   category: 'pizza',
   subcategory: 'Large'
 },
@@ -546,7 +546,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-73',
   name: 'Small Doner Kebab',
   description: '',
-  price: 12.5,
+  price: 13.5,
   category: 'pizza',
   subcategory: 'Small'
 },
@@ -555,7 +555,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-74',
   name: 'Medium Doner Kebab',
   description: '',
-  price: 14.5,
+  price: 15.5,
   category: 'pizza',
   subcategory: 'Medium'
 },
@@ -564,7 +564,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-75',
   name: 'Large Doner Kebab',
   description: '',
-  price: 18.5,
+  price: 19.5,
   category: 'pizza',
   subcategory: 'Large'
 },
@@ -573,7 +573,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-40',
   name: 'Small Meat Feast',
   description: '',
-  price: 12.8,
+  price: 13.8,
   category: 'pizza',
   subcategory: 'Small'
 },
@@ -582,7 +582,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-41',
   name: 'Medium Meat Feast',
   description: '',
-  price: 14.8,
+  price: 15.8,
   category: 'pizza',
   subcategory: 'Medium'
 },
@@ -591,7 +591,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-42',
   name: 'Large Meat Feast',
   description: '',
-  price: 18.8,
+  price: 19.8,
   category: 'pizza',
   subcategory: 'Large'
 },
@@ -600,7 +600,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-43',
   name: 'Small Quattro Formaggi',
   description: '',
-  price: 12.7,
+  price: 13.7,
   category: 'pizza',
   subcategory: 'Small'
 },
@@ -609,7 +609,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-44',
   name: 'Medium Quattro Formaggi',
   description: '',
-  price: 14.7,
+  price: 15.7,
   category: 'pizza',
   subcategory: 'Medium'
 },
@@ -618,7 +618,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-45',
   name: 'Large Quattro Formaggi',
   description: '',
-  price: 18.7,
+  price: 19.7,
   category: 'pizza',
   subcategory: 'Large'
 },
@@ -627,7 +627,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-46',
   name: 'Small Creamy Dreams',
   description: '',
-  price: 12.5,
+  price: 13.5,
   category: 'pizza',
   subcategory: 'Small'
 },
@@ -636,7 +636,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-47',
   name: 'Medium Creamy Dreams',
   description: '',
-  price: 14.5,
+  price: 15.5,
   category: 'pizza',
   subcategory: 'Medium'
 },
@@ -645,7 +645,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-48',
   name: 'Large Creamy Dreams',
   description: '',
-  price: 18.5,
+  price: 19.5,
   category: 'pizza',
   subcategory: 'Large'
 },
@@ -654,7 +654,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-49',
   name: 'Small Bolognese Tradizionale',
   description: '',
-  price: 12.5,
+  price: 13.5,
   category: 'pizza',
   subcategory: 'Small'
 },
@@ -663,7 +663,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-50',
   name: 'Medium Bolognese Tradizionale',
   description: '',
-  price: 14.5,
+  price: 15.5,
   category: 'pizza',
   subcategory: 'Medium'
 },
@@ -672,7 +672,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-51',
   name: 'Large Bolognese Tradizionale',
   description: '',
-  price: 18.5,
+  price: 19.5,
   category: 'pizza',
   subcategory: 'Large'
 },
@@ -681,7 +681,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-52',
   name: 'Small Bbq Chicken',
   description: '',
-  price: 12.5,
+  price: 13.5,
   category: 'pizza',
   subcategory: 'Small'
 },
@@ -690,7 +690,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-53',
   name: 'Medium Bbq Chicken',
   description: '',
-  price: 14.5,
+  price: 15.5,
   category: 'pizza',
   subcategory: 'Medium'
 },
@@ -699,7 +699,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-54',
   name: 'Large Bbq Chicken',
   description: '',
-  price: 18.5,
+  price: 19.5,
   category: 'pizza',
   subcategory: 'Large'
 },
@@ -708,7 +708,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-55',
   name: 'Small American',
   description: '',
-  price: 12.9,
+  price: 13.9,
   category: 'pizza',
   subcategory: 'Small'
 },
@@ -717,7 +717,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-56',
   name: 'Medium American',
   description: '',
-  price: 14.9,
+  price: 15.9,
   category: 'pizza',
   subcategory: 'Medium'
 },
@@ -726,7 +726,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-57',
   name: 'Large American',
   description: '',
-  price: 18.9,
+  price: 19.9,
   category: 'pizza',
   subcategory: 'Large'
 },
@@ -735,7 +735,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-58',
   name: 'Small Spinacio',
   description: '',
-  price: 12.5,
+  price: 13.5,
   category: 'pizza',
   subcategory: 'Small'
 },
@@ -744,7 +744,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-59',
   name: 'Medium Spinacio',
   description: '',
-  price: 14.5,
+  price: 15.5,
   category: 'pizza',
   subcategory: 'Medium'
 },
@@ -753,7 +753,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-60',
   name: 'Large Spinacio',
   description: '',
-  price: 18.5,
+  price: 19.5,
   category: 'pizza',
   subcategory: 'Large'
 },
@@ -762,7 +762,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-61',
   name: 'Small Salmone di Pepe',
   description: '',
-  price: 12.7,
+  price: 13.7,
   category: 'pizza',
   subcategory: 'Small'
 },
@@ -771,7 +771,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-62',
   name: 'Medium Salmone di Pepe',
   description: '',
-  price: 14.7,
+  price: 15.7,
   category: 'pizza',
   subcategory: 'Medium'
 },
@@ -780,7 +780,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-63',
   name: 'Large Salmone di Pepe',
   description: '',
-  price: 18.7,
+  price: 19.7,
   category: 'pizza',
   subcategory: 'Large'
 },
@@ -789,7 +789,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-64',
   name: 'Small Scampi',
   description: '',
-  price: 12.8,
+  price: 13.8,
   category: 'pizza',
   subcategory: 'Small'
 },
@@ -798,7 +798,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-65',
   name: 'Medium Scampi',
   description: '',
-  price: 14.8,
+  price: 15.8,
   category: 'pizza',
   subcategory: 'Medium'
 },
@@ -807,7 +807,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-66',
   name: 'Large Scampi',
   description: '',
-  price: 18.8,
+  price: 19.8,
   category: 'pizza',
   subcategory: 'Large'
 },
@@ -816,7 +816,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-67',
   name: 'Small Tonno',
   description: '',
-  price: 12.5,
+  price: 13.5,
   category: 'pizza',
   subcategory: 'Small'
 },
@@ -825,7 +825,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-68',
   name: 'Medium Tonno',
   description: '',
-  price: 14.5,
+  price: 15.5,
   category: 'pizza',
   subcategory: 'Medium'
 },
@@ -834,7 +834,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-69',
   name: 'Large Tonno',
   description: '',
-  price: 18.5,
+  price: 19.5,
   category: 'pizza',
   subcategory: 'Large'
 },
@@ -843,7 +843,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-70',
   name: 'Small Frutti di Mare',
   description: '',
-  price: 12.8,
+  price: 13.8,
   category: 'pizza',
   subcategory: 'Small'
 },
@@ -852,7 +852,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-71',
   name: 'Medium Frutti di Mare',
   description: '',
-  price: 14.8,
+  price: 15.8,
   category: 'pizza',
   subcategory: 'Medium'
 },
@@ -861,7 +861,7 @@ export const menuItems: MenuItem[] = [
   id: 'pizza-72',
   name: 'Large Frutti di Mare',
   description: '',
-  price: 18.8,
+  price: 19.8,
   category: 'pizza',
   subcategory: 'Large'
 },
