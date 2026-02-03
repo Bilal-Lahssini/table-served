@@ -8,15 +8,11 @@ export interface MenuItem {
   image?: string;
 }
 
-export type SizeOption = 'Small' | 'Medium' | 'Large';
-
 export interface OrderItem {
   menuItem: MenuItem;
   quantity: number;
   notes?: string;
   pastaType?: 'Spaghetti' | 'Tagliatelle' | 'Penne';
-  size?: SizeOption;
-  sizePrice?: number; // Additional price for size
 }
 
 export interface Order {

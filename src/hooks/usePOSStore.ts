@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Table, Order, MenuItem, OrderItem, SizeOption } from '@/types/pos';
+import { Table, Order, MenuItem, OrderItem } from '@/types/pos';
 import { initialTables } from '@/data/testData';
 import { toast } from '@/hooks/use-toast';
 
@@ -17,7 +17,7 @@ export function usePOSStore() {
     setDeliveryAddress('');
   }, []);
 
-  const addItemToOrder = useCallback((menuItem: MenuItem, pastaType?: 'Spaghetti' | 'Tagliatelle' | 'Penne', size?: SizeOption, sizePrice?: number) => {
+  const addItemToOrder = useCallback((menuItem: MenuItem, pastaType?: 'Spaghetti' | 'Tagliatelle' | 'Penne') => {
     if (!selectedTable) return;
 
     const orderId = currentOrder?.id || `order-${Date.now()}`;
@@ -32,11 +32,10 @@ export function usePOSStore() {
         total: 0
       };
 
-      // Check if same item with same pasta type AND same size exists
+      // For pasta items, check if same item with same pasta type exists
       const existingItemIndex = existingOrder.items.findIndex(
         item => item.menuItem.id === menuItem.id && 
-        (menuItem.category !== 'pasta' || item.pastaType === pastaType) &&
-        item.size === size
+        (menuItem.category !== 'pasta' || item.pastaType === pastaType)
       );
 
       let updatedItems: OrderItem[];
@@ -52,15 +51,11 @@ export function usePOSStore() {
         if (pastaType && menuItem.category === 'pasta') {
           newItem.pastaType = pastaType;
         }
-        if (size) {
-          newItem.size = size;
-          newItem.sizePrice = sizePrice || 0;
-        }
         updatedItems = [...existingOrder.items, newItem];
       }
 
       const total = updatedItems.reduce((sum, item) => 
-        sum + ((item.menuItem.price + (item.sizePrice || 0)) * item.quantity), 0
+        sum + (item.menuItem.price * item.quantity), 0
       );
 
       const newOrder = {
@@ -70,9 +65,9 @@ export function usePOSStore() {
       };
 
       // Show toast notification
-      let displayName = menuItem.name;
-      if (size) displayName += ` (${size})`;
-      if (pastaType && menuItem.category === 'pasta') displayName += ` - ${pastaType}`;
+      const displayName = pastaType && menuItem.category === 'pasta' 
+        ? `${menuItem.name} (${pastaType})`
+        : menuItem.name;
       
       toast({
         title: "Toegevoegd",
@@ -83,25 +78,25 @@ export function usePOSStore() {
     });
   }, [selectedTable, currentOrder]);
 
-  const updateItemQuantity = useCallback((itemIndex: number, quantity: number) => {
+  const updateItemQuantity = useCallback((itemId: string, quantity: number) => {
     if (!currentOrder) return;
 
     if (quantity <= 0) {
-      removeItemFromOrder(itemIndex);
+      removeItemFromOrder(itemId);
       return;
     }
 
     setCurrentOrder(prevOrder => {
       if (!prevOrder) return null;
 
-      const updatedItems = prevOrder.items.map((item, index) =>
-        index === itemIndex
+      const updatedItems = prevOrder.items.map(item =>
+        item.menuItem.id === itemId
           ? { ...item, quantity }
           : item
       );
 
       const total = updatedItems.reduce((sum, item) => 
-        sum + ((item.menuItem.price + (item.sizePrice || 0)) * item.quantity), 0
+        sum + (item.menuItem.price * item.quantity), 0
       );
 
       return {
@@ -112,16 +107,16 @@ export function usePOSStore() {
     });
   }, [currentOrder]);
 
-  const removeItemFromOrder = useCallback((itemIndex: number) => {
+  const removeItemFromOrder = useCallback((itemId: string) => {
     setCurrentOrder(prevOrder => {
       if (!prevOrder) return null;
 
       const updatedItems = prevOrder.items.filter(
-        (_, index) => index !== itemIndex
+        item => item.menuItem.id !== itemId
       );
 
       const total = updatedItems.reduce((sum, item) => 
-        sum + ((item.menuItem.price + (item.sizePrice || 0)) * item.quantity), 0
+        sum + (item.menuItem.price * item.quantity), 0
       );
 
       return {
