@@ -105,7 +105,7 @@ export const menuItems: MenuItem[] = [
   id: 'pasta-1',
   name: 'Carbonara',
   description: '',
-  price: 13.95,
+  price: 14.95,
   category: 'pasta',
   subcategory: ''
 },
@@ -114,7 +114,7 @@ export const menuItems: MenuItem[] = [
   id: 'pasta-2',
   name: 'Vegetariana',
   description: '',
-  price: 13.95,
+  price: 14.95,
   category: 'pasta',
   subcategory: ''
 },
@@ -123,7 +123,7 @@ export const menuItems: MenuItem[] = [
   id: 'pasta-3',
   name: 'Curry Chicken',
   description: '',
-  price: 13.95,
+  price: 14.95,
   category: 'pasta',
   subcategory: ''
 },
@@ -132,7 +132,7 @@ export const menuItems: MenuItem[] = [
   id: 'pasta-4',
   name: 'Pollo',
   description: '',
-  price: 13.95,
+  price: 14.95,
   category: 'pasta',
   subcategory: ''
 },
@@ -141,7 +141,7 @@ export const menuItems: MenuItem[] = [
   id: 'pasta-5',
   name: 'Pesto Chicken',
   description: '',
-  price: 13.95,
+  price: 14.95,
   category: 'pasta',
   subcategory: ''
 },
@@ -150,7 +150,7 @@ export const menuItems: MenuItem[] = [
   id: 'pasta-6',
   name: 'Diabolique',
   description: '',
-  price: 14.95,
+  price: 16.95,
   category: 'pasta',
   subcategory: ''
 },
@@ -159,7 +159,7 @@ export const menuItems: MenuItem[] = [
   id: 'pasta-7',
   name: 'Hot Pollo',
   description: '',
-  price: 13.95,
+  price: 14.95,
   category: 'pasta',
   subcategory: ''
 },
@@ -168,7 +168,7 @@ export const menuItems: MenuItem[] = [
   id: 'pasta-8',
   name: 'Creamy Pollo',
   description: '',
-  price: 13.95,
+  price: 14.95,
   category: 'pasta',
   subcategory: ''
 },
@@ -177,7 +177,7 @@ export const menuItems: MenuItem[] = [
   id: 'pasta-9',
   name: 'Cheesy Ham',
   description: '',
-  price: 13.95,
+  price: 14.95,
   category: 'pasta',
   subcategory: ''
 },
@@ -186,7 +186,7 @@ export const menuItems: MenuItem[] = [
   id: 'pasta-10',
   name: 'Lasagne Tradizioanle',
   description: '',
-  price: 13.95,
+  price: 14.95,
   category: 'pasta',
   subcategory: ''
 },
