@@ -150,7 +150,7 @@ export const menuItems: MenuItem[] = [
   id: 'pasta-6',
   name: 'Diabolique',
   description: '',
-  price: 16.95,
+  price: 15.95,
   category: 'pasta',
   subcategory: ''
 },
